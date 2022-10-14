@@ -38,6 +38,8 @@ how these new devices perform, to evaluate how efficient the data
 transmissions are, and to learn from real-world experience so future
 deployments can be optimized for a range of study questions.
 
+Visit the [complete briefing paper and proposal](https://docs.google.com/document/d/1r6L96TEKnydh5dIKPUpB1UwtHEVkACViUd1oD2_1e80/edit?usp=sharing) for additional details
+
 ## Deployment Details
 
 In September 2022, SPLASH bio-loggers were deployed on 12 adult female
