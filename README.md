@@ -44,6 +44,9 @@ In September 2022, SPLASH bio-loggers were deployed on 12 adult female
 northern fur seals at San Miguel Island, California (n=6) and St. Paul
 Island, Alaska (n=6).
 
+[This Google Sheet](https://docs.google.com/spreadsheets/d/1geSmkVzPK_nOkR-bdO5WpM0qHo8Xsw0poYWOz-k2trk/edit?usp=sharing) 
+lists deployment and animal details.
+
 #### Disclaimer
 
 <sub> This repository is a scientific product and is not official
