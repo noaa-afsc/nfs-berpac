@@ -5,6 +5,8 @@
 
 <!-- badges: start -->
 <!-- badges: end -->
+![](https://images.phylopic.org/images/6f7f22fc-30a8-44a1-8f8e-1bbef48a2463/thumbnail/192x192.png)
+![](https://images.phylopic.org/images/7ce9ff63-7eec-4fc3-8f37-5f66f9b924a9/thumbnail/192x192.png)
 
 ## Project Summary
 
