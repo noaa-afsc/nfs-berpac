@@ -1,0 +1,42 @@
+---
+title: "Northern Fur Seal Movement, Dive Behavior, and Oceanography in the Bering Sea and Pacific Ocean"
+format: html
+---
+
+```{r}
+#| include: false
+library(tidyverse)
+library(wcUtils)
+library(sf)
+library(googlesheets4)
+
+deploy_tbl <- read_sheet(
+  "1geSmkVzPK_nOkR-bdO5WpM0qHo8Xsw0poYWOz-k2trk"
+) %>% 
+  select(2,5) %>% 
+  janitor::clean_names() %>% 
+  rename(deployid = deploy_id) %>% 
+  mutate(deploy_date_time_gmt = lubridate::force_tz(deploy_date_time_gmt,"UTC"))
+
+r_files <- fs::dir_ls(here::here('R'), glob = "*.R")
+map(r_files, source)
+```
+
+```{r}
+#| include: false
+data_list <- get_wc_data()
+```
+
+
+## Updated Map of Movements
+
+```{r}
+#| include: false
+locs <- sf::st_as_sf(data_list$locs,
+                     coords = c("longitude","latitude"),
+                     crs = 4326) %>% 
+  sf::st_transform(32606) %>% 
+  left_join(deploy_tbl) %>% 
+  dplyr::filter(date_time > deploy_date_time_gmt)
+```
+
