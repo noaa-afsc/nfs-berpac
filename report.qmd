@@ -14,16 +14,9 @@ library(crawlUtils)
 library(googlesheets4)
 library(rdeck)
 
-deploy_tbl <- read_sheet(
-  "1geSmkVzPK_nOkR-bdO5WpM0qHo8Xsw0poYWOz-k2trk"
-) %>% 
-  select(2,5,10) %>% 
-  janitor::clean_names() %>% 
-  rename(deployid = deploy_id) %>% 
-  mutate(deploy_date_time_gmt = lubridate::force_tz(deploy_date_time_gmt,"UTC"))
-
 r_files <- fs::dir_ls(here::here('R'), glob = "*.R")
 map(r_files, source)
+deploy_tbl <- read_rds(here::here('data/deploy_tbl.rds'))
 ```
 
 ```{r}
@@ -32,10 +25,9 @@ data_list <- get_wc_data()
 ```
 
 
-## Updated Map of Movements
-
 ```{r}
 #| echo: false
+#| include: false
 #| message: false
 #| warning: false
 locs <- sf::st_as_sf(data_list$locs,
@@ -78,71 +70,111 @@ predict_lines_sf <- predict_pts %>%
   bind_rows(.id="deployid") %>% 
   select(-id) %>% 
   left_join(deploy_tbl)
-
-initial_bounds <- sf::st_buffer(st_bbox(predict_lines_sf) %>% 
-                                  st_as_sfc(),100000) %>% 
-  sf::st_transform(4326)
-                                  
+                                 
 
 lines_smi <- filter(predict_lines_sf, deployment_location == "San Miguel Island, CA") %>% 
   sf::st_transform(4326)
 lines_stp <- filter(predict_lines_sf, deployment_location == "St. Paul Island, AK") %>% 
   sf::st_transform(4326)
 
-locs_smi <- filter(predict_pts_sf, deployment_location == "San Miguel Island, CA") %>% 
-  sf::st_transform(4326) %>% tail(1L)
-locs_stp <- filter(predict_pts_sf, deployment_location == "St. Paul Island, AK") %>% 
-  sf::st_transform(4326) %>% tail(1L)
+smi_init <- st_bbox(lines_smi) %>% 
+  st_as_sfc() %>% 
+st_buffer(100000)
 
-full_map <- rdeck(map_style = "mapbox://styles/jmlondon/cl9kktfl2000v16pooqw5p2wz",
-                initial_bounds = initial_bounds,
+stp_init <- st_bbox(lines_stp) %>% 
+  st_as_sfc() %>% 
+st_buffer(100000)
+
+locs_smi <- filter(predict_pts_sf, deployment_location == "San Miguel Island, CA") %>% 
+  sf::st_transform(4326) %>% 
+  group_by(deployid) %>% 
+  arrange(deployid,datetime) %>% 
+  group_map(~ tail(.x, 1L), .keep=TRUE) %>% 
+  bind_rows()
+
+locs_stp <- filter(predict_pts_sf, deployment_location == "St. Paul Island, AK") %>% 
+  sf::st_transform(4326) %>% 
+  group_by(deployid) %>% 
+  arrange(deployid,datetime) %>% 
+  group_map(~ tail(.x, 1L), .keep=TRUE) %>% 
+  bind_rows()
+
+smi_map <- rdeck(map_style = "mapbox://styles/jmlondon/cl9kktfl2000v16pooqw5p2wz",
+                initial_bounds = smi_init,
                 controller = TRUE) %>%
   add_path_layer(data = lines_smi,
                     name = "San Miguel",
                     opacity = 0.8,
                     get_color = scale_color_category(
                       col = deployid,
-                      palette = scales::brewer_pal("seq","Oranges"),
+                      palette = scales::brewer_pal("seq","Oranges")
                       ),
                     wrap_longitude = TRUE,
                     position_format = "XY",
                     width_min_pixels = 1.5,
                     get_path = geometry) %>%
-  add_path_layer(data = lines_stp,
-                    name = "St. Paul",
-                    opacity = 0.8,
-                    get_color = scale_color_category(
-                      col = deployid,
-                      palette = scales::brewer_pal("seq","Greens"),
-                      ),
-                    wrap_longitude = TRUE,
-                    position_format = "XY",
-                    width_min_pixels = 1.5,
-                    get_path = geometry) %>% 
   add_scatterplot_layer(data = locs_smi,
                     name = "San Miguel",
                     opacity = 1,
                     get_fill_color = scale_color_category(
                       col = deployid,
                       palette = scales::brewer_pal("seq","Oranges"),
+                      legend = FALSE
                       ),
                     wrap_longitude = TRUE,
                     position_format = "XY",
                     radius_min_pixels = 4,
-                    get_position = geometry) %>%
+                    get_position = geometry,
+                    pickable = TRUE,
+                    tooltip = c(deployid,datetime))
+
+stp_map <- rdeck(map_style = "mapbox://styles/jmlondon/cl9kktfl2000v16pooqw5p2wz",
+                initial_bounds = stp_init,
+                controller = TRUE) %>%
+  add_path_layer(data = lines_stp,
+                    name = "St. Paul",
+                    opacity = 0.8,
+                    get_color = scale_color_category(
+                      col = deployid,
+                      palette = scales::brewer_pal("seq","Reds")
+                      ),
+                    wrap_longitude = TRUE,
+                    position_format = "XY",
+                    width_min_pixels = 1.5,
+                    get_path = geometry) %>% 
+  
   add_scatterplot_layer(data = locs_stp,
                     name = "St. Paul",
                     opacity = 1,
                     get_fill_color = scale_color_category(
                       col = deployid,
-                      palette = scales::brewer_pal("seq","Greens"),
+                      palette = scales::brewer_pal("seq","Reds"),
+                      legend = FALSE
                       ),
                     wrap_longitude = TRUE,
                     position_format = "XY",
                     radius_min_pixels = 4,
-                    get_position = geometry)
-
-full_map
+                    get_position = geometry,
+                    pickable = TRUE,
+                    tooltip = c(deployid,datetime))
 ```
+
+::: {.column-page}
+
+```{r}
+#| layout: [[1,1]]
+#| echo: false
+
+smi_map
+stp_map
 ```
 
+:::
+
+## Predicted Movements
+
+In September 2022 bio-loggers were deployed on northern fur seals at San Miguel
+Island, California (n=6) and St. Paul Island, Alaska (n=6). The two maps above
+provide near real-time predicted movement paths based on a continuous time
+correlated random walk model. New data are downloaded, processed, and modeled
+at least four times per day.
