@@ -164,7 +164,6 @@ stp_map <- rdeck(map_style = "mapbox://styles/jmlondon/cl9kktfl2000v16pooqw5p2wz
 ```{r}
 #| layout: [[1,1]]
 #| echo: false
-
 smi_map
 stp_map
 ```
@@ -178,3 +177,56 @@ Island, California (n=6) and St. Paul Island, Alaska (n=6). The two maps above
 provide near real-time predicted movement paths based on a continuous time
 correlated random walk model. New data are downloaded, processed, and modeled
 at least four times per day.
+
+```{r}
+ecd_data <- data_list$ecdf %>% 
+  dplyr::arrange(deploy_id, start) %>% 
+  rowwise() %>% 
+  dplyr::mutate(smoothed = list(smooth_ecdf(full_ecdf, bin.width=10))) %>% 
+  dplyr::select(c(deploy_id,start:percent_dry,shallow_ecdf, deep_ecdf,full_ecdf,smoothed)) %>% 
+  unnest(smoothed, keep_empty = TRUE) %>% 
+  group_by(deploy_id, start, end, kind, percent_dry) %>% 
+  dplyr::arrange(deploy_id, start, depth_break) %>% 
+  dplyr::mutate(propTAD = c(0,diff(ecd_prop)),
+                minTAD = 60*(1-0.01*percent_dry) * propTAD) %>% 
+  # determine the next depth value
+  dplyr::mutate(next_depth = dplyr::lead(depth_break)) %>%
+  # determine previous depth for plotting
+  dplyr::mutate(prev_depth = dplyr::lag(depth_break)) %>%
+  dplyr::select(-next_depth) %>%
+  # transform depths to negative values
+  dplyr::mutate(depth_break = depth_break * -1,
+                prev_depth = prev_depth * -1)
+
+ecd_data <- ecd_data %>% 
+  group_by(deploy_id) %>% 
+  arrange(start)
+```
+
+```{r}
+ggplot(ecd_data) +
+  geom_rect(aes(xmin = start, xmax = end,
+                ymin = 0, ymax = percent_dry/10),
+            fill = "seashell3") +
+  geom_rect(aes(xmin = start, xmax = end,
+                ymin = depth_break, ymax = prev_depth,
+                fill = propTAD),
+            color = NA) +
+  scale_fill_scico(palette = "oslo",
+                   direction = -1, trans = "log10",
+                       guide = guide_colorbar(
+                         title = 'proportion of time submerged',
+                         title.position = 'bottom',
+                         title.hjust = 0.5,
+                         barwidth = unit(75, units = "mm"),
+                         barheight = unit(2, units = "mm"))) +
+  facet_grid(deploy_id ~ .) +
+  theme_minimal() +
+  ylab("depth (meters)") +
+  labs(title = "Simulated Dive Behavior of a Harbor Seal in Puget Sound, Washington",
+       subtitle = "proportion of time spent at depth w/ varying summary periods",
+       caption = "data derived from the Emperical Cummulative Distribution (ECD) of time at depth") +
+  theme_minimal() +
+  theme(legend.position = "bottom")
+```
+
