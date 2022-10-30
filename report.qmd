@@ -1,0 +1,294 @@
+---
+title: "Northern Fur Seal Movement, Dive Behavior, and Oceanography in the Bering Sea and Pacific Ocean"
+execute:
+  echo: false
+  warning: false
+  message: false
+format: html
+---
+
+```{r}
+#| include: false
+library(tidyverse)
+library(wcUtils)
+library(sf)
+library(trip)
+library(crawl)
+library(crawlUtils)
+library(googlesheets4)
+library(rdeck)
+
+r_files <- fs::dir_ls(here::here('R'), glob = "*.R")
+map(r_files, source)
+deploy_tbl <- read_rds(here::here('data/deploy_tbl.rds'))
+```
+
+```{r}
+#| include: false
+data_list <- get_wc_data()
+```
+
+## Predicted Movements
+
+In September 2022 bio-loggers were deployed on northern fur seals at San Miguel
+Island, California (n=6) and St. Paul Island, Alaska (n=6). The two maps above
+provide near real-time predicted movement paths based on a continuous time
+correlated random walk model. New data are downloaded, processed, and modeled
+at least four times per day.
+
+```{r}
+#| include: false
+
+locs <- sf::st_as_sf(data_list$locs,
+                     coords = c("longitude","latitude"),
+                     crs = 4326) %>% 
+  left_join(deploy_tbl) %>% 
+  dplyr::filter(date_time > deploy_date_time_gmt) %>% 
+  dplyr::rename(datetime=date_time)
+
+locs <- locs %>%
+  group_by(deployid) %>%
+  arrange(datetime, error_radius) %>%
+    mutate(
+      rank = 1L,
+      rank = case_when(duplicated(datetime, fromLast = FALSE) ~
+                         lag(rank) + 1L, TRUE ~ rank)) %>%
+    dplyr::filter(rank == 1) %>% 
+  filter_tracks() %>% 
+  sf::st_transform(32606) %>% 
+  cu_add_argos_cols()
+
+locs_fit <- locs %>% 
+  group_by(deployid) %>% 
+  group_map(~cu_crw_argos(.x), .keep = TRUE) %>% 
+  purrr::flatten()
+
+predict_pts <- locs_fit %>% 
+  cu_crw_predict(predTime="1 hour", as_sf=FALSE)
+
+deploy_ids <- predict_pts %>% map("deployid") %>% map_chr(head,1L)
+
+predict_pts_sf <- predict_pts %>%  
+  map(crw_as_sf,locType = "p", ftype = "POINT") %>%
+  bind_rows() %>% 
+  left_join(deploy_tbl)
+
+predict_lines_sf <- predict_pts %>% 
+  map(crw_as_sf,locType = "p", ftype = "LINESTRING") %>%
+  set_names(deploy_ids) %>% 
+  bind_rows(.id="deployid") %>% 
+  select(-id) %>% 
+  left_join(deploy_tbl)
+                                 
+
+lines_smi <- filter(predict_lines_sf, deployment_location == "San Miguel Island, CA") %>% 
+  sf::st_transform(4326)
+lines_stp <- filter(predict_lines_sf, deployment_location == "St. Paul Island, AK") %>% 
+  sf::st_transform(4326)
+
+smi_init <- st_bbox(lines_smi) %>% 
+  st_as_sfc() %>% 
+st_buffer(100000)
+
+stp_init <- st_bbox(lines_stp) %>% 
+  st_as_sfc() %>% 
+st_buffer(100000)
+
+locs_smi <- filter(predict_pts_sf, deployment_location == "San Miguel Island, CA") %>% 
+  sf::st_transform(4326) %>% 
+  group_by(deployid) %>% 
+  arrange(deployid,datetime) %>% 
+  group_map(~ tail(.x, 1L), .keep=TRUE) %>% 
+  bind_rows()
+
+locs_stp <- filter(predict_pts_sf, deployment_location == "St. Paul Island, AK") %>% 
+  sf::st_transform(4326) %>% 
+  group_by(deployid) %>% 
+  arrange(deployid,datetime) %>% 
+  group_map(~ tail(.x, 1L), .keep=TRUE) %>% 
+  bind_rows()
+
+smi_map <- rdeck(map_style = "mapbox://styles/jmlondon/cl9kktfl2000v16pooqw5p2wz",
+                initial_bounds = smi_init,
+                controller = TRUE) %>%
+  add_path_layer(data = lines_smi,
+                    name = "San Miguel",
+                    opacity = 0.8,
+                    get_color = scale_color_category(
+                      col = deployid,
+                      palette = scales::brewer_pal("seq","Oranges")
+                      ),
+                    wrap_longitude = TRUE,
+                    position_format = "XY",
+                    width_min_pixels = 1.5,
+                    get_path = geometry) %>%
+  add_scatterplot_layer(data = locs_smi,
+                    name = "San Miguel",
+                    opacity = 1,
+                    get_fill_color = scale_color_category(
+                      col = deployid,
+                      palette = scales::brewer_pal("seq","Oranges"),
+                      legend = FALSE
+                      ),
+                    wrap_longitude = TRUE,
+                    position_format = "XY",
+                    radius_min_pixels = 4,
+                    get_position = geometry,
+                    pickable = TRUE,
+                    tooltip = c(deployid,datetime))
+
+stp_map <- rdeck(map_style = "mapbox://styles/jmlondon/cl9kktfl2000v16pooqw5p2wz",
+                initial_bounds = stp_init,
+                controller = TRUE) %>%
+  add_path_layer(data = lines_stp,
+                    name = "St. Paul",
+                    opacity = 0.8,
+                    get_color = scale_color_category(
+                      col = deployid,
+                      palette = scales::brewer_pal("seq","Reds")
+                      ),
+                    wrap_longitude = TRUE,
+                    position_format = "XY",
+                    width_min_pixels = 1.5,
+                    get_path = geometry) %>% 
+  
+  add_scatterplot_layer(data = locs_stp,
+                    name = "St. Paul",
+                    opacity = 1,
+                    get_fill_color = scale_color_category(
+                      col = deployid,
+                      palette = scales::brewer_pal("seq","Reds"),
+                      legend = FALSE
+                      ),
+                    wrap_longitude = TRUE,
+                    position_format = "XY",
+                    radius_min_pixels = 4,
+                    get_position = geometry,
+                    pickable = TRUE,
+                    tooltip = c(deployid,datetime))
+```
+
+::: {.column-page}
+
+```{r}
+#| layout: [[1,1]]
+smi_map
+stp_map
+```
+
+:::
+
+## Dive Behavior
+
+```{r}
+
+ecd_data <- data_list$ecdf %>% 
+  dplyr::rename(deployid = deploy_id) %>% 
+  dplyr::arrange(deployid, start) %>% 
+  rowwise() %>% 
+  dplyr::mutate(smoothed = list(smooth_ecdf(full_ecdf, bin.width=5))) %>% 
+  dplyr::select(c(deployid,start:percent_dry,shallow_ecdf, deep_ecdf,full_ecdf,smoothed)) %>% 
+  unnest(smoothed, keep_empty = TRUE) %>% 
+  group_by(deployid, start, end, kind, percent_dry) %>% 
+  dplyr::arrange(deployid, start, depth_break) %>% 
+  dplyr::mutate(propTAD = c(0,diff(ecd_prop)),
+                minTAD = 60*(1-0.01*percent_dry) * propTAD) %>% 
+  # determine the next depth value
+  dplyr::mutate(next_depth = dplyr::lead(depth_break)) %>%
+  # determine previous depth for plotting
+  dplyr::mutate(prev_depth = dplyr::lag(depth_break)) %>%
+  dplyr::select(-next_depth) %>%
+  # transform depths to negative values
+  dplyr::mutate(depth_break = depth_break * -1,
+                prev_depth = prev_depth * -1)
+
+ecd_data <- ecd_data %>% 
+  group_by(deployid) %>% 
+  arrange(start)
+```
+
+::: {.column-page}
+
+```{r}
+#| layout: [[1,1]]
+#| fig-asp: 2
+#| fig-width: 5
+
+ecd_data %>% 
+  left_join(deploy_tbl) %>% 
+  filter(deployment_location == "San Miguel Island, CA") %>% 
+ggplot() +
+  geom_rect(aes(xmin = start, xmax = end,
+                ymin = 0, ymax = percent_dry/10),
+            fill = "seashell3") +
+  geom_rect(aes(xmin = start, xmax = end,
+                ymin = depth_break, ymax = prev_depth,
+                fill = propTAD),
+            color = NA) +
+  scale_fill_distiller(palette = "Oranges",
+                   direction = 1, trans = "log10",
+                       guide = guide_colorbar(
+                         title = 'proportion of time submerged',
+                         title.position = 'bottom',
+                         title.hjust = 0.5,
+                         barwidth = unit(75, units = "mm"),
+                         barheight = unit(2, units = "mm"))) +
+  facet_grid(deployid ~ .) +
+  theme_minimal() +
+  ylab("depth (meters)") +
+  labs(title = "San Miguel Island, CA",
+       subtitle = "each bar represents 1 hour binned at 5m depth increments",
+       caption = stringr::str_wrap("data derived from the Emperical Cummulative Distribution (ECD) of time at depth transmitted via Argos")) +
+  theme_minimal() +
+  theme(legend.position = "bottom")
+
+ecd_data %>% 
+  left_join(deploy_tbl) %>% 
+  filter(deployment_location == "St. Paul Island, AK") %>% 
+ggplot() +
+  geom_rect(aes(xmin = start, xmax = end,
+                ymin = 0, ymax = percent_dry/10),
+            fill = "seashell3") +
+  geom_rect(aes(xmin = start, xmax = end,
+                ymin = depth_break, ymax = prev_depth,
+                fill = propTAD),
+            color = NA) +
+  scale_fill_distiller(palette = "Reds",
+                   direction = 1, trans = "log10",
+                       guide = guide_colorbar(
+                         title = 'proportion of time submerged',
+                         title.position = 'bottom',
+                         title.hjust = 0.5,
+                         barwidth = unit(75, units = "mm"),
+                         barheight = unit(2, units = "mm"))) +
+  facet_grid(deployid ~ .) +
+  theme_minimal() +
+  ylab("depth (meters)") +
+  labs(title = "St Paul Island, AK",
+       subtitle = "each bar represents 1 hour binned at 5m depth increments",
+       caption = stringr::str_wrap("data derived from the Emperical Cummulative Distribution (ECD) of time at depth transmitted via Argos")) +
+  theme_minimal() +
+  theme(legend.position = "bottom")
+
+```
+
+:::
+
+#### Disclaimer
+
+<sub>The scientific results and conclusions, as well as any views or opinions
+expressed herein, are those of the author(s) and do not necessarily reflect the
+views of NOAA or the Department of Commerce.</sub>
+
+<sub> This repository is a scientific product and is not official communication
+of the National Oceanic and Atmospheric Administration, or the United States
+Department of Commerce. All NOAA GitHub project code is provided on an 'as is'
+basis and the user assumes responsibility for its use. Any claims against the
+Department of Commerce or Department of Commerce bureaus stemming from the use
+of this GitHub project will be governed by all applicable Federal law. Any
+reference to specific commercial products, processes, or services by service
+mark, trademark, manufacturer, or otherwise, does not constitute or imply their
+endorsement, recommendation or favoring by the Department of Commerce. The
+Department of Commerce seal and logo, or the seal and logo of a DOC bureau,
+shall not be used in any manner to imply endorsement of any commercial product
+or activity by DOC or the United States Government. </sub>

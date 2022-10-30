@@ -5,6 +5,7 @@
 
 <!-- badges: start -->
 <!-- badges: end -->
+
 ![](https://images.phylopic.org/images/6f7f22fc-30a8-44a1-8f8e-1bbef48a2463/thumbnail/192x192.png)
 ![](https://images.phylopic.org/images/7ce9ff63-7eec-4fc3-8f37-5f66f9b924a9/thumbnail/192x192.png)
 
@@ -40,7 +41,9 @@ how these new devices perform, to evaluate how efficient the data
 transmissions are, and to learn from real-world experience so future
 deployments can be optimized for a range of study questions.
 
-Visit the [complete briefing paper and proposal](https://docs.google.com/document/d/1r6L96TEKnydh5dIKPUpB1UwtHEVkACViUd1oD2_1e80/edit?usp=sharing) for additional details
+Visit the [complete briefing paper and
+proposal](https://docs.google.com/document/d/1r6L96TEKnydh5dIKPUpB1UwtHEVkACViUd1oD2_1e80/edit?usp=sharing)
+for additional details
 
 ## Deployment Details
 
@@ -48,10 +51,18 @@ In September 2022, SPLASH bio-loggers were deployed on 12 adult female
 northern fur seals at San Miguel Island, California (n=6) and St. Paul
 Island, Alaska (n=6).
 
-[This Google Sheet](https://docs.google.com/spreadsheets/d/1geSmkVzPK_nOkR-bdO5WpM0qHo8Xsw0poYWOz-k2trk/edit?usp=sharing) 
-lists deployment and animal details.
+[This Google
+Sheet](https://docs.google.com/spreadsheets/d/1geSmkVzPK_nOkR-bdO5WpM0qHo8Xsw0poYWOz-k2trk/edit?usp=sharing)
+lists deployment and animal details. <br /> <br />
+
+------------------------------------------------------------------------
 
 #### Disclaimer
+
+<sub>The scientific results and conclusions, as well as any views or
+opinions expressed herein, are those of the author(s) and do not
+necessarily reflect the views of NOAA or the Department of
+Commerce.</sub>
 
 <sub> This repository is a scientific product and is not official
 communication of the National Oceanic and Atmospheric Administration, or
