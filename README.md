@@ -53,7 +53,15 @@ Island, Alaska (n=6).
 
 [This Google
 Sheet](https://docs.google.com/spreadsheets/d/1geSmkVzPK_nOkR-bdO5WpM0qHo8Xsw0poYWOz-k2trk/edit?usp=sharing)
-lists deployment and animal details. <br /> <br />
+lists deployment and animal details.
+
+## Preliminary Information
+
+Any information, data, or products provided as part of this repository
+are preliminary and should not be used in any way without consultation.
+If you identify errors or have questions, please file an issue.
+
+<br /> <br />
 
 ------------------------------------------------------------------------
 
