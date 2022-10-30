@@ -5,6 +5,45 @@ execute:
   warning: false
   message: false
 format: html
+search: false
+
+author:
+  - id: jml
+    name:
+      literal: Josh M. London
+    email: josh.london@noaa.gov
+    orcid: string
+    attributes:
+      corresponding: true
+    affiliations: 
+      - ref: mml
+  - id: skh
+    name:
+      literal: Stacie K. Hardy
+    email: stacie.hardy@noaa.gov
+    affiliations: 
+      - ref: mml
+  - id: ajo
+    name:
+      literal: Anthony J. Orr
+    email: tony.orr@noaa.gov
+    affiliations: 
+      - ref: mml
+  - id: cek
+    name:
+      literal: Carey E. Kuhn
+    email: carey.kuhn@noaa.gov
+    affiliations: 
+      - ref: mml
+affiliations:
+  - id: mml
+    name: AFSC Marine Mammal Laboratory, NOAA Fisheries
+    address: 7600 Sand Point Way NE
+    city: Seattle
+    region: Washington
+    country: United States
+    postal-code: 98115
+    url: https://www.fisheries.noaa.gov/about/marine-mammal-laboratory
 ---
 
 ```{r}
@@ -28,13 +67,47 @@ deploy_tbl <- read_rds(here::here('data/deploy_tbl.rds'))
 data_list <- get_wc_data()
 ```
 
-## Predicted Movements
+:::{.callout-warning}
+The information on this page is automatically updated every hour and without
+any significant quality checks. Errors may be present and are likely. We are
+providing access to the information in a public forum in the spirit of open
+science and to provide easy access to updated information for the authors and
+interested researchers. 
 
-In September 2022 bio-loggers were deployed on northern fur seals at San Miguel
-Island, California (n=6) and St. Paul Island, Alaska (n=6). The two maps above
-provide near real-time predicted movement paths based on a continuous time
-correlated random walk model. New data are downloaded, processed, and modeled
-at least four times per day.
+**The information provided here should not be cited or
+referenced in any form**
+:::
+
+::: {.column-margin}
+Disclaimer
+
+The scientific results and conclusions, as well as any views or opinions
+expressed herein, are those of the author(s) and do not necessarily reflect the
+views of NMFS, NOAA, or the Department of Commerce. 
+:::
+
+## Predicted Movements
+[Any reference to specific commercial products, processes, or services by
+service mark, trademark, manufacturer, or otherwise, does not constitute or
+imply their endorsement, recommendation or favoring by the Department of
+Commerce.]{.aside}
+
+![](https://images.phylopic.org/images/7ce9ff63-7eec-4fc3-8f37-5f66f9b924a9/thumbnail/192x192.png){style="float: left; padding: 0 10px 0 0;"}
+In September 2022 bio-loggers
+([SPLASH-F](https://wildlifecomputers.com/our-tags/splash-archiving-tags/splash-f/),
+Wildlife Computers, Redmond, Washington) were deployed on adult female northern
+fur seals at San Miguel Island, California (n=6) and St. Paul Island, Alaska
+(n=6) in September of 2022. The two maps below provide near real-time predicted
+movement paths based on a continuous time correlated random walk model. This
+movement model uses Argos and Fastloc GPS derived locations to produce a
+predicted path that most-likely represents that actual movement of the seal.
+Here, the path shown is based on hourly predictions. New data
+are downloaded, processed, and modeled at least hourly every day.
+
+The maps below are interactive and can be zoomed in/out using the scroll wheel
+on the mouse. Additionally, the solid dots indicate the last known location.
+Hovering over a dot will show the deployid and date time associated with that
+location.
 
 ```{r}
 #| include: false
@@ -180,6 +253,37 @@ stp_map
 
 ## Dive Behavior
 
+![](https://images.phylopic.org/images/7ce9ff63-7eec-4fc3-8f37-5f66f9b924a9/thumbnail/192x192.png){style="float: left; padding: 0 10px 0 0;"}
+The SPLASH-F bio-loggers were programmed with a new option for summarizing
+dive behavior. The Argos satellite network has limited bandwidth available for
+transmitting data. This, combined with the inherent nature of a marine mammal
+to spend considerable time at sea and under water, restricts the amount of
+information that can be transmitted. The Empirical Cumulative Distribution (ECD) of
+time at depth provides an efficient and flexible data message for summarizing
+the proportion of time spent at varying depths during specified time periods.
+Unlike previous dive summary messages (e.g. histograms), the depth bins are not
+specified in advance. The ECD adjusts to always include the full range of depths
+explored during the summary period.
+
+In this study, the ECD summary period was specified at 1 hour. This is the
+finest resolution summary period and aligns well with our movement model
+prediction interval. However, such resolution comes at a cost. The transmission
+buffer on the SPLASH-F is limited to 100 messages and only 2 summary periods are
+encoded in a single message (in this study: 2 hours per message). In addition to
+ECD messages, the SPLASH-F is also collecting Fastloc GPS data and oceanographic
+depth and temperature profiles. Since approximately 25 messages are generated
+per day that means the buffer holds about 4 days worth of messages. Fur seals,
+spend relatively little time at the surface when at sea and, thus, not all
+messages are successfully transmitted. This is apparent in the plots below
+where there are open gaps in the timeline representing hours for which no data
+is available.
+
+A key objective of this study is to push the limits of transmission so we can
+learn from real-world deployments in challenging environments. With this 
+information we can work with Wildlife Computers to improve the capabilities and
+make better informed programming decisions in the future.
+
+
 ```{r}
 
 ecd_data <- data_list$ecdf %>% 
@@ -212,7 +316,7 @@ ecd_data <- ecd_data %>%
 ```{r}
 #| layout: [[1,1]]
 #| fig-asp: 2
-#| fig-width: 5
+#| fig-width: 5.5
 
 ecd_data %>% 
   left_join(deploy_tbl) %>% 
@@ -238,7 +342,7 @@ ggplot() +
   ylab("depth (meters)") +
   labs(title = "San Miguel Island, CA",
        subtitle = "each bar represents 1 hour binned at 5m depth increments",
-       caption = stringr::str_wrap("data derived from the Emperical Cummulative Distribution (ECD) of time at depth transmitted via Argos")) +
+       caption = stringr::str_wrap("data derived from the Emperical Cummulative Distribution (ECD) of time at depth transmitted via the Argos satellite network") +
   theme_minimal() +
   theme(legend.position = "bottom")
 
@@ -265,8 +369,8 @@ ggplot() +
   theme_minimal() +
   ylab("depth (meters)") +
   labs(title = "St Paul Island, AK",
-       subtitle = "each bar represents 1 hour binned at 5m depth increments",
-       caption = stringr::str_wrap("data derived from the Emperical Cummulative Distribution (ECD) of time at depth transmitted via Argos")) +
+       subtitle = " ",
+       caption = stringr::str_wrap("data derived from the Emperical Cummulative Distribution (ECD) of time at depth transmitted via the Argos satellite network")) +
   theme_minimal() +
   theme(legend.position = "bottom")
 
@@ -274,21 +378,6 @@ ggplot() +
 
 :::
 
-#### Disclaimer
+## Oceanographic Temperature Profiles
 
-<sub>The scientific results and conclusions, as well as any views or opinions
-expressed herein, are those of the author(s) and do not necessarily reflect the
-views of NOAA or the Department of Commerce.</sub>
-
-<sub> This repository is a scientific product and is not official communication
-of the National Oceanic and Atmospheric Administration, or the United States
-Department of Commerce. All NOAA GitHub project code is provided on an 'as is'
-basis and the user assumes responsibility for its use. Any claims against the
-Department of Commerce or Department of Commerce bureaus stemming from the use
-of this GitHub project will be governed by all applicable Federal law. Any
-reference to specific commercial products, processes, or services by service
-mark, trademark, manufacturer, or otherwise, does not constitute or imply their
-endorsement, recommendation or favoring by the Department of Commerce. The
-Department of Commerce seal and logo, or the seal and logo of a DOC bureau,
-shall not be used in any manner to imply endorsement of any commercial product
-or activity by DOC or the United States Government. </sub>
+Plots of dive and temperature profiles coming soon!
