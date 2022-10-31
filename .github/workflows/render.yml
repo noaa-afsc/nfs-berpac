@@ -35,7 +35,9 @@ jobs:
           sudo apt-get install libproj-dev
       
       - name: Install protobuf
-        run: sudo apt-get install libprotobuf-dev
+        run: |
+          sudo apt-get install libprotobuf-dev
+          sudo apt-get install protobuf-compiler
 
       - name: Install R Dependencies
         uses: r-lib/actions/setup-renv@v2
