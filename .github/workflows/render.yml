@@ -55,3 +55,4 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           WCACCESSKEY: ${{ secrets.WCACCESSKEY }}
           WCSECRETKEY: ${{ secrets.WCSECRETKEY }}
+          MAPBOX_ACCESS_TOKEN: ${{ secrets.MAPBOX_ACCESS_TOKEN }}
