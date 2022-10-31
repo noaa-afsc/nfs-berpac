@@ -26,9 +26,13 @@ jobs:
       
       - name: Install cURL Headers
         run: sudo apt-get install libcurl4-openssl-dev
-        
-      - name: Install libunits Headers
-        run: sudo apt-get install libudunits2-dev
+      
+      -name: Install sf dependencies
+        run: sudo apt-get install \
+            libudunits2-dev \
+            libgdal-dev \
+            libgeos-dev \
+            libproj-dev
 
       - name: Install R Dependencies
         uses: r-lib/actions/setup-renv@v2
