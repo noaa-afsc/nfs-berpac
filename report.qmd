@@ -138,6 +138,7 @@ locs <- locs %>%
       rank = case_when(duplicated(datetime, fromLast = FALSE) ~
                          lag(rank) + 1L, TRUE ~ rank)) %>%
     dplyr::filter(rank == 1) %>% 
+  arrange(datetime) %>% 
   filter_tracks() %>% 
   sf::st_transform(32606) %>% 
   cu_add_argos_cols()
