@@ -48,8 +48,18 @@ affiliations:
 
 ```{r}
 #| include: false
-library(tidyverse)
+library(dplyr)
+library(purrr)
+library(fs)
+library(tidyr)
+library(lubridate)
+library(stringr)
+library(ggplot2)
+library(janitor)
+library(readr)
+library(googlesheets4)
 library(wcUtils)
+library(scam)
 library(sf)
 library(trip)
 library(crawl)
@@ -87,15 +97,11 @@ views of NMFS, NOAA, or the Department of Commerce.
 :::
 
 ## Predicted Movements
-[Any reference to specific commercial products, processes, or services by
-service mark, trademark, manufacturer, or otherwise, does not constitute or
-imply their endorsement, recommendation or favoring by the Department of
-Commerce.]{.aside}
 
 ![](https://images.phylopic.org/images/7ce9ff63-7eec-4fc3-8f37-5f66f9b924a9/thumbnail/192x192.png){style="float: left; padding: 0 10px 0 0;"}
 In September 2022 bio-loggers
 ([SPLASH-F](https://wildlifecomputers.com/our-tags/splash-archiving-tags/splash-f/),
-Wildlife Computers, Redmond, Washington) were deployed on adult female northern
+Wildlife Computers[^1], Redmond, Washington) were deployed on adult female northern
 fur seals at San Miguel Island, California (n=6) and St. Paul Island, Alaska
 (n=6) in September of 2022. The two maps below provide near real-time predicted
 movement paths based on a continuous time correlated random walk model. This
@@ -103,6 +109,11 @@ movement model uses Argos and Fastloc GPS derived locations to produce a
 predicted path that most-likely represents that actual movement of the seal.
 Here, the path shown is based on hourly predictions. New data
 are downloaded, processed, and modeled at least hourly every day.
+
+[^1]: Any reference to specific commercial products, processes, or services by
+  service mark, trademark, manufacturer, or otherwise, does not constitute or
+  imply their endorsement, recommendation or favoring by the Department of
+  Commerce.
 
 The maps below are interactive and can be zoomed in/out using the scroll wheel
 on the mouse. Additionally, the solid dots indicate the last known location.
@@ -315,8 +326,8 @@ ecd_data <- ecd_data %>%
 
 ```{r}
 #| layout: [[1,1]]
-#| fig-asp: 2
-#| fig-width: 5.5
+#| fig-asp: 1.85
+#| fig-width: 5.75
 
 ecd_data %>% 
   left_join(deploy_tbl) %>% 
@@ -342,7 +353,7 @@ ggplot() +
   ylab("depth (meters)") +
   labs(title = "San Miguel Island, CA",
        subtitle = "each bar represents 1 hour binned at 5m depth increments",
-       caption = stringr::str_wrap("data derived from the Emperical Cummulative Distribution (ECD) of time at depth transmitted via the Argos satellite network") +
+       caption = stringr::str_wrap("data derived from the Emperical Cummulative Distribution (ECD) of time at depth transmitted via the Argos satellite network")) +
   theme_minimal() +
   theme(legend.position = "bottom")
 
@@ -380,4 +391,4 @@ ggplot() +
 
 ## Oceanographic Temperature Profiles
 
-Plots of dive and temperature profiles coming soon!
+Plots of ocean temperature profiles coming soon!

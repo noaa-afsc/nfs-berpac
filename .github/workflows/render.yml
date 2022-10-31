@@ -1,0 +1,58 @@
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+  schedule: ## Schedule the job to run at 50th minute each hour.
+    - cron: '50 * * * *'
+
+name: Quarto Publish
+
+jobs:
+  build-deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v2
+
+      - name: Set up Quarto
+        uses: quarto-dev/quarto-actions/setup@v2
+
+      - name: Install R
+        uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: '4.2.0'
+      
+      - name: Install cURL Headers
+        run: sudo apt-get install libcurl4-openssl-dev
+      
+      - name: Install sf dependencies
+        run: |
+          sudo apt-get install libudunits2-dev
+          sudo apt-get install libgdal-dev
+          sudo apt-get install libgeos-dev
+          sudo apt-get install libproj-dev
+      
+      - name: Install protobuf
+        run: |
+          sudo apt-get install libprotobuf-dev
+          sudo apt-get install protobuf-compiler
+      
+      - name: Install jqr
+        run: sudo apt-get install libjq-dev      
+
+      - name: Install R Dependencies
+        uses: r-lib/actions/setup-renv@v2
+        with:
+          cache-version: 1
+
+      - name: Render and Publish
+        uses: quarto-dev/quarto-actions/publish@v2
+        with:
+          target: gh-pages
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          WCACCESSKEY: ${{ secrets.WCACCESSKEY }}
+          WCSECRETKEY: ${{ secrets.WCSECRETKEY }}
+          MAPBOX_ACCESS_TOKEN: ${{ secrets.MAPBOX_ACCESS_TOKEN }}

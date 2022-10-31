@@ -1,6 +1,3 @@
-library(tidyverse)
-library(googlesheets4)
-
 read_sheet(
   "1geSmkVzPK_nOkR-bdO5WpM0qHo8Xsw0poYWOz-k2trk"
 ) %>% 
