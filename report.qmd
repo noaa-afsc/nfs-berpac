@@ -325,8 +325,8 @@ ecd_data <- ecd_data %>%
 
 ```{r}
 #| layout: [[1,1]]
-#| fig-asp: 2
-#| fig-width: 5.5
+#| fig-asp: 1.85
+#| fig-width: 5.75
 
 ecd_data %>% 
   left_join(deploy_tbl) %>% 
@@ -390,4 +390,4 @@ ggplot() +
 
 ## Oceanographic Temperature Profiles
 
-Plots of dive and temperature profiles coming soon!
+Plots of ocean temperature profiles coming soon!
