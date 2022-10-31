@@ -1467,6 +1467,17 @@
         "viridisLite"
       ]
     },
+    "scam": {
+      "Package": "scam",
+      "Version": "1.2-13",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "d244e729ca9feaeeb131723bcee77552",
+      "Requirements": [
+        "Matrix",
+        "mgcv"
+      ]
+    },
     "sf": {
       "Package": "sf",
       "Version": "1.0-8",
