@@ -48,8 +48,18 @@ affiliations:
 
 ```{r}
 #| include: false
-library(tidyverse)
+library(dplyr)
+library(purrr)
+library(fs)
+library(tidyr)
+library(lubridate)
+library(stringr)
+library(ggplot2)
+library(janitor)
+library(readr)
+library(googlesheets4)
 library(wcUtils)
+library(scam)
 library(sf)
 library(trip)
 library(crawl)
