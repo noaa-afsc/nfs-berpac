@@ -1,9 +1,9 @@
 on:
   workflow_dispatch:
   push:
-    branches: 
-      - main
-      - dev
+    branches: [ main ]
+  schedule: ## Schedule the job to run at 50th minute each hour.
+    - cron: '50 * * * *'
 
 name: Quarto Publish
 
