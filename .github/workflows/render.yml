@@ -28,11 +28,11 @@ jobs:
         run: sudo apt-get install libcurl4-openssl-dev
       
       - name: Install sf dependencies
-        run: sudo apt-get install \
-            libudunits2-dev \
-            libgdal-dev \
-            libgeos-dev \
-            libproj-dev
+        run: |
+          sudo apt-get install libudunits2-dev
+          sudo apt-get install libgdal-dev
+          sudo apt-get install libgeos-dev
+          sudo apt-get install libproj-dev
 
       - name: Install R Dependencies
         uses: r-lib/actions/setup-renv@v2
