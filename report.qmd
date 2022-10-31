@@ -342,7 +342,7 @@ ggplot() +
   ylab("depth (meters)") +
   labs(title = "San Miguel Island, CA",
        subtitle = "each bar represents 1 hour binned at 5m depth increments",
-       caption = stringr::str_wrap("data derived from the Emperical Cummulative Distribution (ECD) of time at depth transmitted via the Argos satellite network") +
+       caption = stringr::str_wrap("data derived from the Emperical Cummulative Distribution (ECD) of time at depth transmitted via the Argos satellite network")) +
   theme_minimal() +
   theme(legend.position = "bottom")
 
