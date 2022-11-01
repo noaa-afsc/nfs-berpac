@@ -63,12 +63,12 @@ lists deployment and animal details.
 
 ## Preliminary Information
 
-Any information, data, or products provided as part of this repository are
-preliminary and should not be used in any way without consultation. If you 
-identify errors or have questions, please file an issue.
-
-<br />
-<br />
+Preliminary analysis and visualizations are available via the [project
+webpage](https://nmml.github.io/nfs-berpac/). The information on this page is
+automatically updated every hour and without any significant quality checks.
+Errors may be present and are likely. We are providing access to the information
+in a public forum in the spirit of open science and to provide easy access to
+updated information for the authors and interested researchers.
 
 -------
 
