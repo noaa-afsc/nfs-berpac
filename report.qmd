@@ -103,10 +103,11 @@ In September 2022 bio-loggers
 ([SPLASH-F](https://wildlifecomputers.com/our-tags/splash-archiving-tags/splash-f/),
 Wildlife Computers[^1], Redmond, Washington) were deployed on adult female northern
 fur seals at San Miguel Island, California (n=6) and St. Paul Island, Alaska
-(n=6) in September of 2022. The two maps below provide near real-time predicted
-movement paths based on a continuous time correlated random walk model. This
-movement model uses Argos and Fastloc GPS derived locations to produce a
-predicted path that most-likely represents that actual movement of the seal.
+(n=6). The two maps below provide near real-time predicted
+movement paths based on a continuous time correlated random walk model
+(via the R package, `crawl`). This
+movement model uses both Argos and Fastloc GPS derived locations to produce a
+predicted path that most-likely represents the actual movement of the fur seal.
 Here, the path shown is based on hourly predictions. New data
 are downloaded, processed, and modeled at least hourly every day.
 
@@ -116,7 +117,9 @@ are downloaded, processed, and modeled at least hourly every day.
   Commerce.
 
 The maps below are interactive and can be zoomed in/out using the scroll wheel
-on the mouse. Additionally, the solid dots indicate the last known location.
+on the mouse. The background tiles provide general representation of bathymetric
+features but are kept relatively simple so the maps remain responsive and
+interactive. Additionally, the solid dots indicate the last known location.
 Hovering over a dot will show the deployid and date time associated with that
 location.
 
@@ -266,12 +269,12 @@ stp_map
 ## Dive Behavior
 
 ![](https://images.phylopic.org/images/7ce9ff63-7eec-4fc3-8f37-5f66f9b924a9/thumbnail/192x192.png){style="float: left; padding: 0 10px 0 0;"}
-The SPLASH-F bio-loggers were programmed with a new option for summarizing
-dive behavior. The Argos satellite network has limited bandwidth available for
-transmitting data. This, combined with the inherent nature of a marine mammal
-to spend considerable time at sea and under water, restricts the amount of
-information that can be transmitted. The Empirical Cumulative Distribution (ECD) of
-time at depth provides an efficient and flexible data message for summarizing
+The SPLASH-F bio-loggers were programmed with a new option for summarizing dive
+behavior. The Argos satellite network has limited bandwidth available for
+transmitting data. This, combined with the inherent nature of a marine mammal to
+spend considerable time at sea and under water, restricts the amount of
+information that can be transmitted. The Empirical Cumulative Distribution (ECD)
+of time at depth provides an efficient and flexible data message for summarizing
 the proportion of time spent at varying depths during specified time periods.
 Unlike previous dive summary messages (e.g. histograms), the depth bins are not
 specified in advance. The ECD adjusts to always include the full range of depths
@@ -393,3 +396,35 @@ ggplot() +
 ## Oceanographic Temperature Profiles
 
 Plots of ocean temperature profiles coming soon!
+
+## Project Summary
+
+In 2018, the AFSC Polar Ecosystems Program and Wildlife Computers began
+collaboration on a project to develop a new family of SPLASH bio-loggers
+that would provide a small footprint device capable of FastLoc GPS,
+ocean temperature profiles, and on-board dive behavior summaries that
+provide unbiased data and efficient transmission via Argos. Due to the
+COVID-19 pandemic, the intended deployments on ribbon and spotted seals
+in 2020 were not possible, and in the spring of 2022, only 2 of the 25
+devices available were deployed. Instead of letting these devices sit on
+the shelf for 2+ years, we have developed a plan to deploy a portion of
+them on northern fur seals at San Miguel Island and northern fur seals
+at St. Paul Island. At least 10 devices will be reserved for future
+deployments on ice seals via collaborative research with Alaska Native
+communities. These tags were originally funded by the US Navy in 2017.
+
+These tags employ two key enhancements that have not been previously
+available:
+
+1.  Improved ocean temperature profile capabilities with a dedicated
+    external thermistor probe
+2.  On-board processing of time-at-depth data to create a more efficient
+    dive behavior summary message that relies on empirical cumulative
+    distributions instead of the typical histogram bin approach used for
+    decades.
+
+Because relatively few devices with these new capabilities have been
+deployed (by MML or other researchers), there is a great need to observe
+how these new devices perform, to evaluate how efficient the data
+transmissions are, and to learn from real-world experience so future
+deployments can be optimized for a range of study questions.
