@@ -21,5 +21,8 @@ get_wc_data <- function() {
   ecdf_tbl <- map(res,"ecdf") %>% 
     bind_rows()
   
-  return(list(locs=locs_tbl,ecdf=ecdf_tbl))
+  pdt_tbl <- map(res,"pdt") %>% 
+    bind_rows()
+  
+  return(list(locs=locs_tbl,ecdf=ecdf_tbl,pdt=pdt_tbl))
 }

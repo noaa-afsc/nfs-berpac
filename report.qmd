@@ -381,7 +381,6 @@ ggplot() +
                          barwidth = unit(75, units = "mm"),
                          barheight = unit(2, units = "mm"))) +
   facet_grid(deployid ~ .) +
-  theme_minimal() +
   ylab("depth (meters)") +
   labs(title = "St Paul Island, AK",
        subtitle = " ",
@@ -395,7 +394,97 @@ ggplot() +
 
 ## Oceanographic Temperature Profiles
 
-Plots of ocean temperature profiles coming soon!
+![](https://images.phylopic.org/images/7ce9ff63-7eec-4fc3-8f37-5f66f9b924a9/thumbnail/192x192.png){style="float: left; padding: 0 10px 0 0;"}
+
+```{r}
+pdt_data <- data_list$pdt %>% 
+  group_by(deploy_id,date) %>% 
+  mutate(data_hr = lubridate::round_date(date,unit="hour"),
+         x1 = data_hr - hours(4),
+         x2 = data_hr + hours(4)) %>% 
+  dplyr::mutate(next_depth = dplyr::lead(depth)) %>%
+  # determine previous depth for plotting
+  dplyr::mutate(prev_depth = dplyr::lag(depth)) %>%
+  dplyr::select(-next_depth) %>%
+  # transform depths to negative values
+  dplyr::mutate(depth = depth * -1,
+                prev_depth = prev_depth * -1) %>% 
+  ungroup() %>% 
+  left_join(deploy_tbl, by=c("deploy_id" = "deployid"))
+```
+
+The deployed bio-loggers also have the capability of recording temperature at
+depth profiles. Temperature and depth values are collected on dive ascents at 1
+Hz and are only created on qualifying dives, and when enabled in the
+transmission schedule (in this study, just 2 hours per day, 11 hours apart). If
+a dive descends 10% deeper than any previous dive in the current summary period,
+then all previous data are cleared, and new temperature-depth data are collected
+for the remainder of the current dive.
+
+The temperature is saved at the depths specified in the World Ocean Database
+2013 (WOD13). Additionally, the entire range of depths cannot be encoded into a
+single Argos message. So, depth ranges from 0-80 meters, 85-425 meters, and
+450-1200 meters are encoded in separate messages. Therefore, it's possible to
+only receive portions of the complete dive profile.
+
+In the figures below, you'll notice large gaps in time between dive profiles.
+This is largely due to the limited window during which the tags were programmed
+to collect profiles -- just 2 separate hours per day with 11 hours between them.
+
+::: {.column-page}
+
+```{r}
+#| layout: [[1,1]]
+#| fig-asp: 1.75
+#| fig-width: 5.75
+pdt_data %>% 
+  filter(depth<0) %>% 
+  filter(deployment_location == "San Miguel Island, CA") %>%
+ggplot() +
+  geom_rect(aes(xmin = x1, xmax = x2,
+                ymin = prev_depth, ymax=depth,
+                fill=max_te), colour=NA) +
+  scale_fill_distiller(palette = "Spectral",
+                   direction = -1,
+                       guide = guide_colorbar(
+                         title = 'temperature (C)',
+                         title.position = 'bottom',
+                         title.hjust = 0.5,
+                         barwidth = unit(75, units = "mm"),
+                         barheight = unit(2, units = "mm"))) +
+  facet_grid(deploy_id ~ .) +
+  ylab("depth (meters)") +
+  labs(title = "San Miguel Island, CA",
+       subtitle = "each bar represents an 8-hour window for a single upcast",
+       caption = stringr::str_wrap("data derived from the onboard thermister and transmitted as temperature at depths based on the World Ocean Database 2013 specification")) +
+  theme_minimal() +
+  theme(legend.position = "bottom")
+
+pdt_data %>% 
+  filter(depth<0) %>% 
+  filter(deployment_location == "St. Paul Island, AK") %>%
+ggplot() +
+  geom_rect(aes(xmin = x1, xmax = x2,
+                ymin = prev_depth, ymax=depth,
+                fill=max_te), colour=NA) +
+  scale_fill_distiller(palette = "Spectral",
+                   direction = -1,
+                       guide = guide_colorbar(
+                         title = 'temperature (C)',
+                         title.position = 'bottom',
+                         title.hjust = 0.5,
+                         barwidth = unit(75, units = "mm"),
+                         barheight = unit(2, units = "mm"))) +
+  facet_grid(deploy_id ~ .) +
+  ylab("depth (meters)") +
+  labs(title = "St. Paul Island, AK",
+       subtitle = " ",
+       caption = stringr::str_wrap("data derived from the onboard thermister and transmitted as temperature at depths based on the World Ocean Database 2013 specification")) +
+  theme_minimal() +
+  theme(legend.position = "bottom")
+```
+
+:::
 
 ## Project Summary
 
