@@ -125,7 +125,6 @@ location.
 
 ```{r}
 #| include: false
-
 locs <- sf::st_as_sf(data_list$locs,
                      coords = c("longitude","latitude"),
                      crs = 4326) %>% 
@@ -143,8 +142,8 @@ locs <- locs %>%
     dplyr::filter(rank == 1) %>% 
   arrange(datetime) %>% 
   filter_tracks() %>% 
-  sf::st_transform(3338) %>% 
-  cu_add_argos_cols()
+  cu_add_argos_cols() %>% 
+  sf::st_transform(3832)
 
 locs_fit <- locs %>% 
   group_by(deployid) %>% 
