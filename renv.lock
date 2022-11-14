@@ -136,6 +136,16 @@
       "Hash": "4f57884290cc75ab22f4af9e9d4ca862",
       "Requirements": []
     },
+    "akima": {
+      "Package": "akima",
+      "Version": "0.6-3.4",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "e0264d4b3aeefc4362cea5fdbbd8a5c4",
+      "Requirements": [
+        "sp"
+      ]
+    },
     "askpass": {
       "Package": "askpass",
       "Version": "1.1",
