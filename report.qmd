@@ -260,8 +260,8 @@ stp_map <- rdeck(map_style = "mapbox://styles/jmlondon/cl9kktfl2000v16pooqw5p2wz
 
 ```{r}
 #| layout: [[1,1]]
-smi_map
 stp_map
+smi_map
 ```
 
 :::
@@ -335,6 +335,33 @@ ecd_data <- ecd_data %>%
 
 ecd_data %>% 
   left_join(deploy_tbl) %>% 
+  filter(deployment_location == "St. Paul Island, AK") %>% 
+ggplot() +
+  geom_rect(aes(xmin = start, xmax = end,
+                ymin = 0, ymax = percent_dry/10),
+            fill = "seashell3") +
+  geom_rect(aes(xmin = start, xmax = end,
+                ymin = depth_break, ymax = prev_depth,
+                fill = propTAD),
+            color = NA) +
+  scale_fill_distiller(palette = "Reds",
+                   direction = 1, trans = "log10",
+                       guide = guide_colorbar(
+                         title = 'proportion of time submerged',
+                         title.position = 'bottom',
+                         title.hjust = 0.5,
+                         barwidth = unit(75, units = "mm"),
+                         barheight = unit(2, units = "mm"))) +
+  facet_grid(deployid ~ .) +
+  ylab("depth (meters)") +
+  labs(title = "St Paul Island, AK",
+       subtitle = "each bar represents 1 hour binned at 5m depth increments",
+       caption = stringr::str_wrap("data derived from the Emperical Cummulative Distribution (ECD) of time at depth transmitted via the Argos satellite network")) +
+  theme_minimal() +
+  theme(legend.position = "bottom")
+
+ecd_data %>% 
+  left_join(deploy_tbl) %>% 
   filter(deployment_location == "San Miguel Island, CA") %>% 
 ggplot() +
   geom_rect(aes(xmin = start, xmax = end,
@@ -356,33 +383,6 @@ ggplot() +
   theme_minimal() +
   ylab("depth (meters)") +
   labs(title = "San Miguel Island, CA",
-       subtitle = "each bar represents 1 hour binned at 5m depth increments",
-       caption = stringr::str_wrap("data derived from the Emperical Cummulative Distribution (ECD) of time at depth transmitted via the Argos satellite network")) +
-  theme_minimal() +
-  theme(legend.position = "bottom")
-
-ecd_data %>% 
-  left_join(deploy_tbl) %>% 
-  filter(deployment_location == "St. Paul Island, AK") %>% 
-ggplot() +
-  geom_rect(aes(xmin = start, xmax = end,
-                ymin = 0, ymax = percent_dry/10),
-            fill = "seashell3") +
-  geom_rect(aes(xmin = start, xmax = end,
-                ymin = depth_break, ymax = prev_depth,
-                fill = propTAD),
-            color = NA) +
-  scale_fill_distiller(palette = "Reds",
-                   direction = 1, trans = "log10",
-                       guide = guide_colorbar(
-                         title = 'proportion of time submerged',
-                         title.position = 'bottom',
-                         title.hjust = 0.5,
-                         barwidth = unit(75, units = "mm"),
-                         barheight = unit(2, units = "mm"))) +
-  facet_grid(deployid ~ .) +
-  ylab("depth (meters)") +
-  labs(title = "St Paul Island, AK",
        subtitle = " ",
        caption = stringr::str_wrap("data derived from the Emperical Cummulative Distribution (ECD) of time at depth transmitted via the Argos satellite network")) +
   theme_minimal() +
@@ -433,6 +433,72 @@ to collect profiles -- just 2 separate hours per day with 11 hours between them.
 ::: {.column-page}
 
 ```{r}
+pdt_nest <- pdt_data %>% 
+  group_by(deploy_id, deployment_location) %>% 
+  nest() %>% 
+  rowwise() %>% 
+  mutate(temp_interp = list(temp_interp(data)))
+```
+
+
+::: {.panel-tabset}
+
+### St. Paul Island
+
+```{r}
+#| layout: [[1,1]]
+#| fig-asp: 1.75
+#| fig-width: 5.75
+pdt_data %>% 
+  filter(depth<0) %>% 
+  filter(deployment_location == "St. Paul Island, AK") %>%
+ggplot() +
+  geom_rect(aes(xmin = x1, xmax = x2,
+                ymin = prev_depth, ymax=depth,
+                fill=max_te), colour=NA) +
+  scale_fill_distiller(palette = "Spectral",
+                   direction = -1,
+                       guide = guide_colorbar(
+                         title = 'temperature (C)',
+                         title.position = 'bottom',
+                         title.hjust = 0.5,
+                         barwidth = unit(75, units = "mm"),
+                         barheight = unit(2, units = "mm"))) +
+  facet_grid(deploy_id ~ .) +
+  ylab("depth (meters)") +
+  labs(title = "Temperature at Depth (transmitted)",
+       subtitle = "each bar depicts data from a single upcast as an 8-hour window") +
+  theme_minimal() +
+  theme(legend.position = "bottom")
+
+pdt_nest %>% 
+  filter(deployment_location == "St. Paul Island, AK") %>% 
+  unnest(cols=c(temp_interp)) %>% 
+  ungroup() %>% 
+  select(deploy_id,doy,depth,max_te) %>% 
+ggplot(aes(x = doy, y = depth))+
+  geom_raster(aes(fill = max_te), interpolate=TRUE)+
+  #geom_contour(aes(z = max_te), binwidth = 1, color = "black")+
+  scale_x_continuous(labels = function(x) parse_date_time(x, orders="j") %>% format("%b %d"),
+                     name = NULL) +
+  scale_fill_distiller(palette = "Spectral",
+                       guide = guide_colorbar(
+                         title = 'temperature (C)',
+                         title.position = 'bottom',
+                         title.hjust = 0.5,
+                         barwidth = unit(75, units = "mm"),
+                         barheight = unit(2, units = "mm"))) +
+  facet_grid(deploy_id ~ .) +
+  ylab("depth (meters)") +
+  labs(title = "Temperature at Depth (interpreted)",
+       subtitle = "temperature values interpreted to regular grid via Akima spline") +
+  theme_minimal() +
+  theme(legend.position = "bottom")
+```
+
+### San Miguel Island
+
+```{r}
 #| layout: [[1,1]]
 #| fig-asp: 1.75
 #| fig-width: 5.75
@@ -453,21 +519,22 @@ ggplot() +
                          barheight = unit(2, units = "mm"))) +
   facet_grid(deploy_id ~ .) +
   ylab("depth (meters)") +
-  labs(title = "San Miguel Island, CA",
-       subtitle = "each bar represents an 8-hour window for a single upcast",
-       caption = stringr::str_wrap("data derived from the onboard thermister and transmitted as temperature at depths based on the World Ocean Database 2013 specification")) +
+  labs(title = "Temperature at Depth (transmitted)",
+       subtitle = "each bar depicts data from a single upcast as an 8-hour window") +
   theme_minimal() +
   theme(legend.position = "bottom")
 
-pdt_data %>% 
-  filter(depth<0) %>% 
-  filter(deployment_location == "St. Paul Island, AK") %>%
-ggplot() +
-  geom_rect(aes(xmin = x1, xmax = x2,
-                ymin = prev_depth, ymax=depth,
-                fill=max_te), colour=NA) +
+pdt_nest %>% 
+  filter(deployment_location == "San Miguel Island, CA") %>% 
+  unnest(cols=c(temp_interp)) %>% 
+  ungroup() %>% 
+  select(deploy_id,doy,depth,max_te) %>% 
+ggplot(aes(x = doy, y = depth))+
+  geom_raster(aes(fill = max_te), interpolate=TRUE)+
+  #geom_contour(aes(z = max_te), binwidth = 1, color = "black")+
+  scale_x_continuous(labels = function(x) parse_date_time(x, orders="j") %>% format("%b %d"),
+                     name = NULL) +
   scale_fill_distiller(palette = "Spectral",
-                   direction = -1,
                        guide = guide_colorbar(
                          title = 'temperature (C)',
                          title.position = 'bottom',
@@ -476,12 +543,13 @@ ggplot() +
                          barheight = unit(2, units = "mm"))) +
   facet_grid(deploy_id ~ .) +
   ylab("depth (meters)") +
-  labs(title = "St. Paul Island, AK",
-       subtitle = " ",
-       caption = stringr::str_wrap("data derived from the onboard thermister and transmitted as temperature at depths based on the World Ocean Database 2013 specification")) +
-  theme_minimal() +
+  labs(title = "Temperature at Depth (interpreted)",
+       subtitle = "temperature values interpreted to regular grid via Akima spline") +
+    theme_minimal() +
   theme(legend.position = "bottom")
 ```
+
+:::
 
 :::
 
