@@ -125,6 +125,9 @@ location.
 
 ```{r}
 #| include: false
+
+lcc_proj <- "+proj=lcc +lon_0=-160 +lat_0=45 +lat_1=35 +lat_2=60"
+
 locs <- sf::st_as_sf(data_list$locs,
                      coords = c("longitude","latitude"),
                      crs = 4326) %>% 
@@ -143,7 +146,7 @@ locs <- locs %>%
   arrange(datetime) %>% 
   filter_tracks() %>% 
   cu_add_argos_cols() %>% 
-  sf::st_transform(3832)
+  sf::st_transform(lcc_proj)
 
 locs_fit <- locs %>% 
   group_by(deployid) %>% 
