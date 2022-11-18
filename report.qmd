@@ -66,10 +66,12 @@ library(crawl)
 library(crawlUtils)
 library(googlesheets4)
 library(rdeck)
+library(downloadthis)
 
 r_files <- fs::dir_ls(here::here('R'), glob = "*.R")
 map(r_files, source)
 deploy_tbl <- read_rds(here::here('data/deploy_tbl.rds'))
+
 ```
 
 ```{r}
@@ -150,7 +152,8 @@ locs <- locs %>%
 
 locs_fit <- locs %>% 
   group_by(deployid) %>% 
-  group_map(~cu_crw_argos(.x), .keep = TRUE) %>% 
+  group_map(~cu_crw_argos(.x, crw_control = list(method="L-BFGS-B")), 
+            .keep = TRUE) %>% 
   purrr::flatten()
 
 predict_pts <- locs_fit %>% 
