@@ -10,7 +10,7 @@ filter_tracks <- function(tracks_sf) {
   suppressWarnings(
     keep <- sda(
       dat_tr,
-      smax = 20 #km/hour or 5.5m/sec
+      smax = 40 #km/hour
     )
   )
   
