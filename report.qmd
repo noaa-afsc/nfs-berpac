@@ -12,14 +12,14 @@ author:
     name:
       literal: Josh M. London
     email: josh.london@noaa.gov
-    orcid: string
+    orcid: 0000-0002-3647-5046
     attributes:
       corresponding: true
     affiliations: 
       - ref: mml
   - id: skh
     name:
-      literal: Stacie K. Hardy
+      literal: Stacie M. Koslovsky
     email: stacie.hardy@noaa.gov
     affiliations: 
       - ref: mml
