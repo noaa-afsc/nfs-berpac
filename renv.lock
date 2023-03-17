@@ -636,6 +636,7 @@
       "Source": "Repository",
       "Repository": "CRAN",
       "Hash": "f4dcd23b67e33d851d2079f703e8b985",
+
       "Requirements": []
     },
     "fuzzyjoin": {
@@ -1202,6 +1203,7 @@
       "Source": "Repository",
       "Repository": "CRAN",
       "Hash": "e25f18436e3efd42c7c590a1c4c15390",
+
       "Requirements": [
         "generics",
         "timechange"
