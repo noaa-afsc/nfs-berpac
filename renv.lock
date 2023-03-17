@@ -2295,8 +2295,8 @@
       "RemoteRepo": "wcUtils",
       "RemoteUsername": "jmlondon",
       "RemoteRef": "dev",
-      "RemoteSha": "a06e13139ba52fc123f7890a0dfb0d393e7ac4e3",
-      "Hash": "eb9b24dfe68a62ec047348e99f32dab2",
+      "RemoteSha": "4a00e4367e16619dcdd14e3465ac75f711443e39",
+      "Hash": "7e75f409387db679c4037a0bd2e3cdbc",
       "Requirements": [
         "XML",
         "data.table",
