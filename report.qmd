@@ -61,9 +61,9 @@ library(googlesheets4)
 library(wcUtils)
 library(scam)
 library(sf)
+library(crawlUtils)
 library(trip)
 library(crawl)
-library(crawlUtils)
 library(googlesheets4)
 library(rdeck)
 library(downloadthis)
@@ -128,7 +128,8 @@ location.
 ```{r}
 #| include: false
 
-lcc_proj <- "+proj=lcc +lon_0=-160 +lat_0=45 +lat_1=35 +lat_2=60"
+map_proj <- "+proj=lcc +lon_0=-150 +lat_1=33 +lat_2=45 +units=m"
+
 
 locs <- sf::st_as_sf(data_list$locs,
                      coords = c("longitude","latitude"),
@@ -147,17 +148,23 @@ locs <- locs %>%
     dplyr::filter(rank == 1) %>% 
   arrange(datetime) %>% 
   filter_tracks() %>% 
-  cu_add_argos_cols() %>% 
-  sf::st_transform(lcc_proj)
+  sf::st_transform(map_proj)
+
+# if (st_crs(locs, parameters = TRUE)$units_gdal == "metre") {
+#   message("Converting projection units from m to km for efficient optimization")
+#   new_prj <- st_crs(locs)$input
+#   new_prj <- sub("units=m", "units=km", new_prj, fixed = TRUE)
+#   locs <- st_transform(locs, new_prj)
+# }
 
 locs_fit <- locs %>% 
+  cu_add_argos_cols() %>% 
   group_by(deployid) %>% 
   group_map(~cu_crw_argos(.x, crw_control = list(method="L-BFGS-B")), 
-            .keep = TRUE) %>% 
-  purrr::flatten()
+            .keep = TRUE)
 
 predict_pts <- locs_fit %>% 
-  cu_crw_predict(predTime="1 hour", as_sf=FALSE)
+  map(cu_crw_predict, predTime="1 hour", as_sf=FALSE)
 
 deploy_ids <- predict_pts %>% map("deployid") %>% map_chr(head,1L)
 
