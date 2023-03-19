@@ -636,7 +636,6 @@
       "Source": "Repository",
       "Repository": "CRAN",
       "Hash": "f4dcd23b67e33d851d2079f703e8b985",
-
       "Requirements": []
     },
     "fuzzyjoin": {
@@ -1203,7 +1202,6 @@
       "Source": "Repository",
       "Repository": "CRAN",
       "Hash": "e25f18436e3efd42c7c590a1c4c15390",
-
       "Requirements": [
         "generics",
         "timechange"
@@ -2295,8 +2293,8 @@
       "RemoteRepo": "wcUtils",
       "RemoteUsername": "jmlondon",
       "RemoteRef": "dev",
-      "RemoteSha": "4a00e4367e16619dcdd14e3465ac75f711443e39",
-      "Hash": "7e75f409387db679c4037a0bd2e3cdbc",
+      "RemoteSha": "87a76f66a548352bc8c335ad24cdf8133c94ff0c",
+      "Hash": "c887c38e5d8d275648c11f2c7a0654c3",
       "Requirements": [
         "XML",
         "data.table",
