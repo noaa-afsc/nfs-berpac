@@ -70,7 +70,12 @@ library(downloadthis)
 
 r_files <- fs::dir_ls(here::here('R'), glob = "*.R")
 map(r_files, source)
-deploy_tbl <- read_rds(here::here('data/deploy_tbl.rds'))
+deploy_tbl <- read_rds(here::here('data/deploy_tbl.rds')) %>% 
+  mutate(deploy_end_date_time_gmt = lubridate::as_date('2023-01-01')) %>% 
+  mutate(deploy_end_date_time_gmt = case_when(
+    deployid == "SM1369SML_19U3077" ~ lubridate::as_date('2022-11-01'),
+    TRUE ~ deploy_end_date_time_gmt
+  ))
 
 ```
 
@@ -128,14 +133,14 @@ location.
 ```{r}
 #| include: false
 
-map_proj <- "+proj=lcc +lon_0=-150 +lat_1=33 +lat_2=45 +units=m"
+map_proj <- "+proj=lcc +lon_0=-160 +lat_1=33 +lat_2=45 +units=m"
 
 
 locs <- sf::st_as_sf(data_list$locs,
                      coords = c("longitude","latitude"),
                      crs = 4326) %>% 
   left_join(deploy_tbl) %>% 
-  dplyr::filter(date_time > deploy_date_time_gmt) %>% 
+  dplyr::filter(between(date_time,deploy_date_time_gmt,deploy_end_date_time_gmt)) %>% 
   dplyr::rename(datetime=date_time)
 
 locs <- locs %>%
@@ -150,14 +155,15 @@ locs <- locs %>%
   filter_tracks() %>% 
   sf::st_transform(map_proj)
 
-# if (st_crs(locs, parameters = TRUE)$units_gdal == "metre") {
-#   message("Converting projection units from m to km for efficient optimization")
-#   new_prj <- st_crs(locs)$input
-#   new_prj <- sub("units=m", "units=km", new_prj, fixed = TRUE)
-#   locs <- st_transform(locs, new_prj)
-# }
+if (st_crs(locs, parameters = TRUE)$units_gdal == "metre") {
+  message("Converting projection units from m to km for efficient optimization")
+  new_prj <- st_crs(locs)$input
+  new_prj <- sub("units=m", "units=km", new_prj, fixed = TRUE)
+  locs <- st_transform(locs, new_prj)
+}
 
 locs_fit <- locs %>% 
+  mutate(across(starts_with('error_'), ~ .x *1/1000)) %>% 
   cu_add_argos_cols() %>% 
   group_by(deployid) %>% 
   group_map(~cu_crw_argos(.x, crw_control = list(method="L-BFGS-B")), 
@@ -347,6 +353,7 @@ ecd_data <- ecd_data %>%
 
 ecd_data %>% 
   left_join(deploy_tbl) %>% 
+  dplyr::filter(between(end,deploy_date_time_gmt,deploy_end_date_time_gmt)) %>%
   filter(deployment_location == "St. Paul Island, AK") %>% 
 ggplot() +
   geom_rect(aes(xmin = start, xmax = end,
@@ -374,6 +381,7 @@ ggplot() +
 
 ecd_data %>% 
   left_join(deploy_tbl) %>% 
+  dplyr::filter(between(end,deploy_date_time_gmt,deploy_end_date_time_gmt)) %>%
   filter(deployment_location == "San Miguel Island, CA") %>% 
 ggplot() +
   geom_rect(aes(xmin = start, xmax = end,
@@ -420,7 +428,8 @@ pdt_data <- data_list$pdt %>%
   dplyr::mutate(depth = depth * -1,
                 prev_depth = prev_depth * -1) %>% 
   ungroup() %>% 
-  left_join(deploy_tbl, by=c("deploy_id" = "deployid"))
+  left_join(deploy_tbl, by=c("deploy_id" = "deployid")) %>% 
+  dplyr::filter(between(data_hr,deploy_date_time_gmt,deploy_end_date_time_gmt))
 ```
 
 ![](https://images.phylopic.org/images/7ce9ff63-7eec-4fc3-8f37-5f66f9b924a9/thumbnail/192x192.png){style="float: left; padding: 0 10px 0 0;"}
