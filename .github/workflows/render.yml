@@ -3,7 +3,7 @@ on:
   push:
     branches: [ main ]
   schedule: ## Schedule the job to run every 15 minutes.
-    - cron: '*/15 * * * *'
+    - cron: '15 */3 * * *'
 
 name: Quarto Publish
 
