@@ -65,7 +65,7 @@ library(crawlUtils)
 library(trip)
 library(crawl)
 library(googlesheets4)
-library(rdeck)
+#library(rdeck)
 library(downloadthis)
 
 r_files <- fs::dir_ls(here::here('R'), glob = "*.R")
