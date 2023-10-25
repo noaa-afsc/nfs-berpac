@@ -214,7 +214,7 @@ locs_stp <- filter(predict_pts_sf, deployment_location == "St. Paul Island, AK")
   group_map(~ tail(.x, 1L), .keep=TRUE) %>% 
   bind_rows()
 
-smi_map <- rdeck(map_style = "mapbox://mapbox.mapbox-bathymetry-v2",
+smi_map <- rdeck(map_style = "mapbox://styles/jmlondon/cl9kktfl2000v16pooqw5p2wz",
                 initial_bounds = smi_init,
                 controller = TRUE) %>%
   add_path_layer(data = lines_smi,
