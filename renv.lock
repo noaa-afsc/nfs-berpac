@@ -3,6 +3,14 @@
     "Version": "4.3.1",
     "Repositories": [
       {
+        "Name": "ianjonsen",
+        "URL": "https://ianjonsen.r-universe.dev"
+      },
+      {
+        "Name": "otn",
+        "URL": "https://ocean-tracking-network.r-universe.dev"
+      },
+      {
         "Name": "jmlondon",
         "URL": "https://jmlondon.r-universe.dev"
       },
