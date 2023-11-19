@@ -12,16 +12,16 @@ get_wc_data <- function() {
            "633601e017e8480e28ae9eaa",
            "633610f017e8480e28aea03e")
   
-  res <- map(ids, wcGetDownload)
+  res <- purrr::map(ids, wcGetDownload)
   
-  locs_tbl <- map(res,"all_locations") %>% 
+  locs_tbl <- purrr::map(res,"all_locations") %>% 
     bind_rows() %>% 
     drop_na(any_of(c("latitude", "longitude")))
   
-  ecdf_tbl <- map(res,"ecdf") %>% 
+  ecdf_tbl <- purrr::map(res,"ecdf") %>% 
     bind_rows()
   
-  pdt_tbl <- map(res,"pdt") %>% 
+  pdt_tbl <- purrr::map(res,"pdt") %>% 
     bind_rows()
   
   return(list(locs=locs_tbl,ecdf=ecdf_tbl,pdt=pdt_tbl))

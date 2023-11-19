@@ -61,18 +61,16 @@ library(googlesheets4)
 library(wcUtils)
 library(scam)
 library(sf)
-library(crawlUtils)
-library(trip)
-library(crawl)
 library(googlesheets4)
 library(rdeck)
 library(downloadthis)
+library(aniMotum)
 
 r_files <- fs::dir_ls(here::here('R'), glob = "*.R")
-map(r_files, source)
+purrr::map(r_files, source)
 deploy_tbl <- read_rds(here::here('data/deploy_tbl.rds')) %>% 
-  mutate(deploy_end_date_time_gmt = lubridate::as_date('2023-01-01')) %>% 
-  mutate(deploy_end_date_time_gmt = case_when(
+  dplyr::mutate(deploy_end_date_time_gmt = lubridate::as_date('2023-01-01')) %>% 
+  dplyr::mutate(deploy_end_date_time_gmt = dplyr::case_when(
     deployid == "SM1369SML_19U3077" ~ lubridate::as_date('2022-11-01'),
     TRUE ~ deploy_end_date_time_gmt
   ))
@@ -112,10 +110,10 @@ Wildlife Computers[^1], Redmond, Washington) were deployed on adult female north
 fur seals at San Miguel Island, California (n=6) and St. Paul Island, Alaska
 (n=6). The two maps below provide near real-time predicted
 movement paths based on a continuous time correlated random walk model
-(via the R package, `crawl`). This
+(via the R package, `aniMotum`). This
 movement model uses both Argos and Fastloc GPS derived locations to produce a
 predicted path that most-likely represents the actual movement of the fur seal.
-Here, the path shown is based on hourly predictions. New data
+Here, the path shown is based on ~10 minute predictions. New data
 are downloaded, processed, and modeled at least hourly every day.
 
 [^1]: Any reference to specific commercial products, processes, or services by
@@ -151,57 +149,48 @@ locs <- locs %>%
       rank = case_when(duplicated(datetime, fromLast = FALSE) ~
                          lag(rank) + 1L, TRUE ~ rank)) %>%
     dplyr::filter(rank == 1) %>% 
-  arrange(datetime) %>% 
-  filter_tracks() %>% 
+  arrange(deployid,datetime) %>% 
+  ungroup() %>%
   sf::st_transform(map_proj)
 
-if (st_crs(locs, parameters = TRUE)$units_gdal == "metre") {
-  message("Converting projection units from m to km for efficient optimization")
-  new_prj <- st_crs(locs)$input
-  new_prj <- sub("units=m", "units=km", new_prj, fixed = TRUE)
-  locs <- st_transform(locs, new_prj)
-}
+locs <- locs |> 
+  dplyr::mutate(
+    quality = case_when(
+      type == 'FastGPS' ~ 'G',
+      type == 'User' ~ 'G',
+      .default = quality
+    )
+  )
 
+locs_fit <- fit_ssm(
+  x = locs,
+  vmax = 8,
+  model = "crw",
+  time.step = 0.15,
+  id = "deployid",
+  date = "datetime",
+  lc = "quality",
+  epar = c(
+    "error_semi_major_axis",
+    "error_semi_minor_axis",
+    "error_ellipse_orientation"
+  ),
+  tz = "UTC"
+)
 
-definitely_cu_crw_argos = function(.data, ...){
-
-  possibly_func = purrr::possibly(cu_crw_argos, otherwise = NULL)
-
-  result = NULL
-  try_number = 1
-
-  while(is.null(result) && try_number <= 20){
-    try_number = try_number + 1
-    result = possibly_func(.data, crw_control = list(method="L-BFGS-B"), ...)
-  }
-
-  return(result)
-}
-
-
-
-locs_fit <- locs %>% 
-  mutate(across(starts_with('error_'), ~ .x *1/1000)) %>% 
-  cu_add_argos_cols() %>% 
-  group_by(deployid) %>% 
-  group_map(~definitely_cu_crw_argos(.x), 
-            .keep = TRUE)
-
-predict_pts <- locs_fit %>% 
-  map(cu_crw_predict, predTime="1 hour", as_sf=FALSE)
-
-deploy_ids <- predict_pts %>% map("deployid") %>% map_chr(head,1L)
-
-predict_pts_sf <- predict_pts %>%  
-  map(crw_as_sf,locType = "p", ftype = "POINT") %>%
-  bind_rows() %>% 
+predict_pts_sf <-
+  grab(locs_fit,
+       what = "predicted",
+       as_sf = TRUE,
+       group = TRUE) |> 
+  rename(deployid = id,
+         datetime = date) |> 
   left_join(deploy_tbl)
 
-predict_lines_sf <- predict_pts %>% 
-  map(crw_as_sf,locType = "p", ftype = "LINESTRING") %>%
-  set_names(deploy_ids) %>% 
-  bind_rows(.id="deployid") %>% 
-  select(-id) %>% 
+predict_lines_sf <- predict_pts_sf %>% 
+  group_by(deployid) %>%
+  summarise(do_union = FALSE) %>%
+  st_cast("LINESTRING") %>%
   left_join(deploy_tbl)
                                  
 
