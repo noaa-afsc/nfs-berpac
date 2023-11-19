@@ -165,7 +165,7 @@
       "Package": "aniMotum",
       "Version": "1.2",
       "Source": "Repository",
-      "Repository": "https://ianjonsen.r-universe.dev",
+      "Repository": "https://ocean-tracking-network.r-universe.dev",
       "Requirements": [
         "CircStats",
         "R",
