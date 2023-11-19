@@ -65,7 +65,7 @@ library(crawlUtils)
 library(trip)
 library(crawl)
 library(googlesheets4)
-#library(rdeck)
+library(rdeck)
 library(downloadthis)
 
 r_files <- fs::dir_ls(here::here('R'), glob = "*.R")
@@ -162,11 +162,29 @@ if (st_crs(locs, parameters = TRUE)$units_gdal == "metre") {
   locs <- st_transform(locs, new_prj)
 }
 
+
+definitely_cu_crw_argos = function(.data, ...){
+
+  possibly_func = purrr::possibly(cu_crw_argos, otherwise = NULL)
+
+  result = NULL
+  try_number = 1
+
+  while(is.null(result) && try_number <= 20){
+    try_number = try_number + 1
+    result = possibly_func(.data, crw_control = list(method="L-BFGS-B"), ...)
+  }
+
+  return(result)
+}
+
+
+
 locs_fit <- locs %>% 
   mutate(across(starts_with('error_'), ~ .x *1/1000)) %>% 
   cu_add_argos_cols() %>% 
   group_by(deployid) %>% 
-  group_map(~cu_crw_argos(.x, crw_control = list(method="L-BFGS-B")), 
+  group_map(~definitely_cu_crw_argos(.x), 
             .keep = TRUE)
 
 predict_pts <- locs_fit %>% 
@@ -323,9 +341,13 @@ ecd_data <- data_list$ecdf %>%
   dplyr::rename(deployid = deploy_id) %>% 
   dplyr::arrange(deployid, start) %>% 
   rowwise() %>% 
-  dplyr::mutate(smoothed = list(smooth_ecdf(full_ecdf, bin.width=5))) %>% 
-  dplyr::select(c(deployid,start:percent_dry,shallow_ecdf, deep_ecdf,full_ecdf,smoothed)) %>% 
-  unnest(smoothed, keep_empty = TRUE) %>% 
+  dplyr::mutate(spline_interp = list(spline_ecdf(full_ecdf, bin.width=5)),
+                depth50pct = x_pct_depth(full_ecdf,pct_tad = 0.5),
+                n_dives = if_else(all(is.na(n_dives_shallow),is.na(n_dives_deep)),
+                                  NA, mean(c(n_dives_shallow,n_dives_deep), na.rm=TRUE))
+  ) %>% 
+  dplyr::select(c(deployid,start:percent_dry,shallow_ecdf, deep_ecdf,full_ecdf,spline_interp,depth50pct, n_dives)) %>% 
+  unnest(spline_interp, keep_empty = TRUE) %>% 
   group_by(deployid, start, end, kind, percent_dry) %>% 
   dplyr::arrange(deployid, start, depth_break) %>% 
   dplyr::mutate(propTAD = c(0,diff(ecd_prop)),
