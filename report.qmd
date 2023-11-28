@@ -68,10 +68,11 @@ library(aniMotum)
 
 r_files <- fs::dir_ls(here::here('R'), glob = "*.R")
 purrr::map(r_files, source)
-deploy_tbl <- read_rds(here::here('data/deploy_tbl.rds')) %>% 
-  dplyr::mutate(deploy_end_date_time_gmt = lubridate::as_date('2023-01-01')) %>% 
+deploy_tbl <- read_rds(here::here('data/deploy_tbl.rds'))  |>  
+  dplyr::mutate(deploy_end_date_time_gmt = lubridate::as_date('2023-01-01')) |> 
   dplyr::mutate(deploy_end_date_time_gmt = dplyr::case_when(
     deployid == "SM1369SML_19U3077" ~ lubridate::as_date('2022-11-01'),
+    deployment_location == "Bogoslof Island" ~ lubridate::as_date('2024-03-01'),
     TRUE ~ deploy_end_date_time_gmt
   ))
 
@@ -79,7 +80,7 @@ deploy_tbl <- read_rds(here::here('data/deploy_tbl.rds')) %>%
 
 ```{r}
 #| include: false
-data_list <- get_wc_data()
+data_list <- get_wc_data(deploy_tbl$deployid)
 ```
 
 :::{.callout-warning}
@@ -164,9 +165,9 @@ locs <- locs |>
 
 locs_fit <- fit_ssm(
   x = locs,
-  vmax = 8,
+  vmax = 5,
   model = "crw",
-  time.step = 0.15,
+  time.step = 0.25,
   id = "deployid",
   date = "datetime",
   lc = "quality",
@@ -198,12 +199,18 @@ lines_smi <- filter(predict_lines_sf, deployment_location == "San Miguel Island,
   sf::st_transform(4326)
 lines_stp <- filter(predict_lines_sf, deployment_location == "St. Paul Island, AK") %>% 
   sf::st_transform(4326)
+lines_bogo <- filter(predict_lines_sf, deployment_location == "Bogoslof Island") %>% 
+  sf::st_transform(4326)
 
 smi_init <- st_bbox(lines_smi) %>% 
   st_as_sfc() %>% 
 st_buffer(100000)
 
 stp_init <- st_bbox(lines_stp) %>% 
+  st_as_sfc() %>% 
+st_buffer(100000)
+
+bogo_init <- st_bbox(lines_bogo) %>% 
   st_as_sfc() %>% 
 st_buffer(100000)
 
@@ -215,6 +222,13 @@ locs_smi <- filter(predict_pts_sf, deployment_location == "San Miguel Island, CA
   bind_rows()
 
 locs_stp <- filter(predict_pts_sf, deployment_location == "St. Paul Island, AK") %>% 
+  sf::st_transform(4326) %>% 
+  group_by(deployid) %>% 
+  arrange(deployid,datetime) %>% 
+  group_map(~ tail(.x, 1L), .keep=TRUE) %>% 
+  bind_rows()
+
+locs_bogo <- filter(predict_pts_sf, deployment_location == "Bogoslof Island") %>% 
   sf::st_transform(4326) %>% 
   group_by(deployid) %>% 
   arrange(deployid,datetime) %>% 
@@ -279,7 +293,45 @@ stp_map <- rdeck(map_style = "mapbox://styles/jmlondon/cl9kktfl2000v16pooqw5p2wz
                     get_position = geometry,
                     pickable = TRUE,
                     tooltip = c(deployid,datetime))
+
+bogo_map <- rdeck(map_style = "mapbox://styles/jmlondon/cl9kktfl2000v16pooqw5p2wz",
+                initial_bounds = bogo_init,
+                controller = TRUE) %>%
+  add_path_layer(data = lines_bogo,
+                    name = "Bogoslof",
+                    opacity = 0.8,
+                    get_color = scale_color_category(
+                      col = deployid,
+                      palette = scales::brewer_pal("seq","Reds")
+                      ),
+                    wrap_longitude = TRUE,
+                    position_format = "XY",
+                    width_min_pixels = 1.5,
+                    get_path = geometry) %>% 
+  
+  add_scatterplot_layer(data = locs_bogo,
+                    name = "Bogoslof",
+                    opacity = 1,
+                    get_fill_color = scale_color_category(
+                      col = deployid,
+                      palette = scales::brewer_pal("seq","Reds"),
+                      legend = FALSE
+                      ),
+                    wrap_longitude = TRUE,
+                    position_format = "XY",
+                    radius_min_pixels = 4,
+                    get_position = geometry,
+                    pickable = TRUE,
+                    tooltip = c(deployid,datetime))
 ```
+
+::: {.column-page}
+
+```{r}
+bogo_map
+```
+
+:::
 
 ::: {.column-page}
 
@@ -335,7 +387,8 @@ ecd_data <- data_list$ecdf %>%
                 n_dives = if_else(all(is.na(n_dives_shallow),is.na(n_dives_deep)),
                                   NA, mean(c(n_dives_shallow,n_dives_deep), na.rm=TRUE))
   ) %>% 
-  dplyr::select(c(deployid,start:percent_dry,shallow_ecdf, deep_ecdf,full_ecdf,spline_interp,depth50pct, n_dives)) %>% 
+  dplyr::select(c(deployid,start:percent_dry,shallow_ecdf, 
+                  deep_ecdf,full_ecdf,spline_interp,depth50pct, n_dives)) %>% 
   unnest(spline_interp, keep_empty = TRUE) %>% 
   group_by(deployid, start, end, kind, percent_dry) %>% 
   dplyr::arrange(deployid, start, depth_break) %>% 
@@ -353,7 +406,50 @@ ecd_data <- data_list$ecdf %>%
 ecd_data <- ecd_data %>% 
   group_by(deployid) %>% 
   arrange(start)
+
+ecd_data <- ecd_data |> 
+  dplyr::filter(!(between(start,lubridate::ymd_hms('2023-11-22 10:00:00'), 
+                         lubridate::ymd_hms('2023-11-22 13:00:00')) &
+                    deployid == '899_19U3097')
+                )
 ```
+
+::: {.column-page}
+
+```{r}
+#| fig-asp: 1.85
+ecd_data %>% 
+  left_join(deploy_tbl) %>% 
+  dplyr::filter(between(end,deploy_date_time_gmt,deploy_end_date_time_gmt)) %>%
+  filter(deployment_location == "Bogoslof Island") %>% 
+ggplot() +
+  geom_rect(aes(xmin = start, xmax = end,
+                ymin = 0, ymax = percent_dry/10),
+            fill = "seashell3") +
+  geom_rect(aes(xmin = start, xmax = end,
+                ymin = depth_break, ymax = prev_depth,
+                fill = propTAD),
+            color = NA) +
+  scale_fill_distiller(palette = "Reds",
+                   direction = 1, trans = "log10",
+                       guide = guide_colorbar(
+                         title = 'proportion of time submerged',
+                         title.position = 'bottom',
+                         title.hjust = 0.5,
+                         barwidth = unit(75, units = "mm"),
+                         barheight = unit(2, units = "mm"))) +
+  facet_grid(deployid ~ .) +
+  ylab("depth (meters)") +
+  labs(title = "Bogoslof Island",
+       subtitle = "each bar represents 1 hour binned at 5m depth increments",
+       caption = stringr::str_wrap("data derived from the Emperical Cummulative 
+                                   Distribution (ECD) of time at depth 
+                                   transmitted via the Argos satellite network")) +
+  theme_minimal() +
+  theme(legend.position = "bottom")
+```
+
+:::
 
 ::: {.column-page}
 
@@ -386,7 +482,9 @@ ggplot() +
   ylab("depth (meters)") +
   labs(title = "St Paul Island, AK",
        subtitle = "each bar represents 1 hour binned at 5m depth increments",
-       caption = stringr::str_wrap("data derived from the Emperical Cummulative Distribution (ECD) of time at depth transmitted via the Argos satellite network")) +
+       caption = stringr::str_wrap("data derived from the Emperical Cummulative 
+                                   Distribution (ECD) of time at depth 
+                                   transmitted via the Argos satellite network")) +
   theme_minimal() +
   theme(legend.position = "bottom")
 
@@ -415,7 +513,10 @@ ggplot() +
   ylab("depth (meters)") +
   labs(title = "San Miguel Island, CA",
        subtitle = " ",
-       caption = stringr::str_wrap("data derived from the Emperical Cummulative Distribution (ECD) of time at depth transmitted via the Argos satellite network")) +
+       caption = stringr::str_wrap("data derived from the Emperical 
+                                   Cummulative Distribution (ECD) of time at 
+                                   depth transmitted via the Argos satellite 
+                                   network")) +
   theme_minimal() +
   theme(legend.position = "bottom")
 
@@ -511,7 +612,8 @@ pdt_nest %>%
 ggplot(aes(x = doy, y = depth))+
   geom_raster(aes(fill = max_te), interpolate=TRUE)+
   #geom_contour(aes(z = max_te), binwidth = 1, color = "black")+
-  scale_x_continuous(labels = function(x) parse_date_time(x, orders="j") %>% format("%b %d"),
+  scale_x_continuous(labels = function(x) parse_date_time(x, orders="j") %>% 
+                       format("%b %d"),
                      name = NULL) +
   scale_fill_distiller(palette = "Spectral",
                        guide = guide_colorbar(
@@ -564,7 +666,8 @@ pdt_nest %>%
 ggplot(aes(x = doy, y = depth))+
   geom_raster(aes(fill = max_te), interpolate=TRUE)+
   #geom_contour(aes(z = max_te), binwidth = 1, color = "black")+
-  scale_x_continuous(labels = function(x) parse_date_time(x, orders="j") %>% format("%b %d"),
+  scale_x_continuous(labels = function(x) parse_date_time(x, orders="j") %>% 
+                       format("%b %d"),
                      name = NULL) +
   scale_fill_distiller(palette = "Spectral",
                        guide = guide_colorbar(
