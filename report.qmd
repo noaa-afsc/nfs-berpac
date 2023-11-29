@@ -65,7 +65,7 @@ library(googlesheets4)
 library(rdeck)
 library(downloadthis)
 library(aniMotum)
-library(scico)
+library(rcartocolor)
 
 r_files <- fs::dir_ls(here::here('R'), glob = "*.R")
 purrr::map(r_files, source)
@@ -247,7 +247,7 @@ smi_map <- rdeck(map_style = "mapbox://styles/jmlondon/cl9kktfl2000v16pooqw5p2wz
                     opacity = 0.8,
                     get_color = scale_color_category(
                       col = deployid,
-                      palette = scico(6,palette = "acton",categorical = TRUE)
+                      palette = rcartocolor::carto_pal(6,"SunsetDark")
                       ),
                     wrap_longitude = TRUE,
                     position_format = "XY",
@@ -258,7 +258,7 @@ smi_map <- rdeck(map_style = "mapbox://styles/jmlondon/cl9kktfl2000v16pooqw5p2wz
                     opacity = 1,
                     get_fill_color = scale_color_category(
                       col = deployid,
-                      palette = scico(6,palette = "acton",categorical = TRUE),
+                      palette = rcartocolor::carto_pal(6,"SunsetDark"),
                       legend = FALSE
                       ),
                     wrap_longitude = TRUE,
@@ -276,7 +276,7 @@ stp_map <- rdeck(map_style = "mapbox://styles/jmlondon/cl9kktfl2000v16pooqw5p2wz
                     opacity = 0.8,
                     get_color = scale_color_category(
                       col = deployid,
-                      palette = scico(6,palette = "bamako",categorical = TRUE)
+                      palette = rcartocolor::carto_pal(6,"BrwnYl")
                       ),
                     wrap_longitude = TRUE,
                     position_format = "XY",
@@ -288,7 +288,7 @@ stp_map <- rdeck(map_style = "mapbox://styles/jmlondon/cl9kktfl2000v16pooqw5p2wz
                     opacity = 1,
                     get_fill_color = scale_color_category(
                       col = deployid,
-                      palette = scico(6,palette = "bamako",categorical = TRUE),
+                      palette = rcartocolor::carto_pal(6,"BrwnYl"),
                       legend = FALSE
                       ),
                     wrap_longitude = TRUE,
@@ -306,7 +306,7 @@ bogo_map <- rdeck(map_style = "mapbox://styles/jmlondon/cl9kktfl2000v16pooqw5p2w
                     opacity = 0.8,
                     get_color = scale_color_category(
                       col = deployid,
-                      palette = scico(11,palette = "buda",categorical = TRUE)
+                      palette = rcartocolor::carto_pal(11,"Prism")
                       ),
                     wrap_longitude = TRUE,
                     position_format = "XY",
@@ -318,7 +318,7 @@ bogo_map <- rdeck(map_style = "mapbox://styles/jmlondon/cl9kktfl2000v16pooqw5p2w
                     opacity = 1,
                     get_fill_color = scale_color_category(
                       col = deployid,
-                      palette = scico(11,palette = "buda",categorical = TRUE),
+                      palette = rcartocolor::carto_pal(11,"Prism"),
                       legend = FALSE
                       ),
                     wrap_longitude = TRUE,
