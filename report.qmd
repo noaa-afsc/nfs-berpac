@@ -65,6 +65,7 @@ library(googlesheets4)
 library(rdeck)
 library(downloadthis)
 library(aniMotum)
+library(scico)
 
 r_files <- fs::dir_ls(here::here('R'), glob = "*.R")
 purrr::map(r_files, source)
@@ -109,12 +110,13 @@ In September 2022 bio-loggers
 ([SPLASH-F](https://wildlifecomputers.com/our-tags/splash-archiving-tags/splash-f/),
 Wildlife Computers[^1], Redmond, Washington) were deployed on adult female northern
 fur seals at San Miguel Island, California (n=6) and St. Paul Island, Alaska
-(n=6). The two maps below provide near real-time predicted
+(n=6). Then in 2023, additional bio-loggers (n=11) were deployed on adult female
+northern fur seals at Bogoslof Island, Alaska. The three maps below provide near real-time predicted
 movement paths based on a continuous time correlated random walk model
 (via the R package, `aniMotum`). This
 movement model uses both Argos and Fastloc GPS derived locations to produce a
 predicted path that most-likely represents the actual movement of the fur seal.
-Here, the path shown is based on ~10 minute predictions. New data
+Here, the path shown is based on 15 minute predictions. New data
 are downloaded, processed, and modeled at least hourly every day.
 
 [^1]: Any reference to specific commercial products, processes, or services by
@@ -139,7 +141,9 @@ locs <- sf::st_as_sf(data_list$locs,
                      coords = c("longitude","latitude"),
                      crs = 4326) %>% 
   left_join(deploy_tbl) %>% 
-  dplyr::filter(between(date_time,deploy_date_time_gmt,deploy_end_date_time_gmt)) %>% 
+  dplyr::filter(between(date_time,
+                        deploy_date_time_gmt + lubridate::hours(12),
+                        deploy_end_date_time_gmt)) %>% 
   dplyr::rename(datetime=date_time)
 
 locs <- locs %>%
@@ -243,7 +247,7 @@ smi_map <- rdeck(map_style = "mapbox://styles/jmlondon/cl9kktfl2000v16pooqw5p2wz
                     opacity = 0.8,
                     get_color = scale_color_category(
                       col = deployid,
-                      palette = scales::brewer_pal("seq","Oranges")
+                      palette = scico(6,palette = "acton",categorical = TRUE)
                       ),
                     wrap_longitude = TRUE,
                     position_format = "XY",
@@ -254,7 +258,7 @@ smi_map <- rdeck(map_style = "mapbox://styles/jmlondon/cl9kktfl2000v16pooqw5p2wz
                     opacity = 1,
                     get_fill_color = scale_color_category(
                       col = deployid,
-                      palette = scales::brewer_pal("seq","Oranges"),
+                      palette = scico(6,palette = "acton",categorical = TRUE),
                       legend = FALSE
                       ),
                     wrap_longitude = TRUE,
@@ -272,7 +276,7 @@ stp_map <- rdeck(map_style = "mapbox://styles/jmlondon/cl9kktfl2000v16pooqw5p2wz
                     opacity = 0.8,
                     get_color = scale_color_category(
                       col = deployid,
-                      palette = scales::brewer_pal("seq","Reds")
+                      palette = scico(6,palette = "bamako",categorical = TRUE)
                       ),
                     wrap_longitude = TRUE,
                     position_format = "XY",
@@ -284,7 +288,7 @@ stp_map <- rdeck(map_style = "mapbox://styles/jmlondon/cl9kktfl2000v16pooqw5p2wz
                     opacity = 1,
                     get_fill_color = scale_color_category(
                       col = deployid,
-                      palette = scales::brewer_pal("seq","Reds"),
+                      palette = scico(6,palette = "bamako",categorical = TRUE),
                       legend = FALSE
                       ),
                     wrap_longitude = TRUE,
@@ -302,7 +306,7 @@ bogo_map <- rdeck(map_style = "mapbox://styles/jmlondon/cl9kktfl2000v16pooqw5p2w
                     opacity = 0.8,
                     get_color = scale_color_category(
                       col = deployid,
-                      palette = scales::brewer_pal("seq","Reds")
+                      palette = scico(11,palette = "buda",categorical = TRUE)
                       ),
                     wrap_longitude = TRUE,
                     position_format = "XY",
@@ -314,7 +318,7 @@ bogo_map <- rdeck(map_style = "mapbox://styles/jmlondon/cl9kktfl2000v16pooqw5p2w
                     opacity = 1,
                     get_fill_color = scale_color_category(
                       col = deployid,
-                      palette = scales::brewer_pal("seq","Reds"),
+                      palette = scico(11,palette = "buda",categorical = TRUE),
                       legend = FALSE
                       ),
                     wrap_longitude = TRUE,
@@ -417,7 +421,8 @@ ecd_data <- ecd_data |>
 ::: {.column-page}
 
 ```{r}
-#| fig-asp: 1.85
+#| fig-asp: 1
+#| fig-width: 11.75
 ecd_data %>% 
   left_join(deploy_tbl) %>% 
   dplyr::filter(between(end,deploy_date_time_gmt,deploy_end_date_time_gmt)) %>%
@@ -574,6 +579,60 @@ pdt_nest <- pdt_data %>%
 ```
 
 
+### Bogoslof Island
+
+```{r}
+#| layout: [[1,1]]
+#| fig-asp: 1.75
+#| fig-width: 5.75
+pdt_data %>% 
+  filter(depth<0) %>% 
+  filter(deployment_location == "Bogoslof Island") %>%
+ggplot() +
+  geom_rect(aes(xmin = x1, xmax = x2,
+                ymin = prev_depth, ymax=depth,
+                fill=max_te), colour=NA) +
+  scale_fill_distiller(palette = "Spectral",
+                   direction = -1,
+                       guide = guide_colorbar(
+                         title = 'temperature (C)',
+                         title.position = 'bottom',
+                         title.hjust = 0.5,
+                         barwidth = unit(75, units = "mm"),
+                         barheight = unit(2, units = "mm"))) +
+  facet_grid(deploy_id ~ .) +
+  ylab("depth (meters)") +
+  labs(title = "Temperature at Depth (transmitted)",
+       subtitle = "each bar depicts data from a single upcast as an 8-hour window") +
+  theme_minimal() +
+  theme(legend.position = "bottom")
+
+pdt_nest %>% 
+  filter(deployment_location == "Bogoslof Island") %>% 
+  unnest(cols=c(temp_interp)) %>% 
+  ungroup() %>% 
+  select(deploy_id,doy,depth,max_te) %>% 
+ggplot(aes(x = doy, y = depth))+
+  geom_raster(aes(fill = max_te), interpolate=TRUE)+
+  #geom_contour(aes(z = max_te), binwidth = 1, color = "black")+
+  scale_x_continuous(labels = function(x) parse_date_time(x, orders="j") %>% 
+                       format("%b %d"),
+                     name = NULL) +
+  scale_fill_distiller(palette = "Spectral",
+                       guide = guide_colorbar(
+                         title = 'temperature (C)',
+                         title.position = 'bottom',
+                         title.hjust = 0.5,
+                         barwidth = unit(75, units = "mm"),
+                         barheight = unit(2, units = "mm"))) +
+  facet_grid(deploy_id ~ .) +
+  ylab("depth (meters)") +
+  labs(title = "Temperature at Depth (interpreted)",
+       subtitle = "temperature values interpreted to regular grid via Akima spline") +
+  theme_minimal() +
+  theme(legend.position = "bottom")
+```
+
 ::: {.panel-tabset}
 
 ### St. Paul Island
@@ -700,9 +759,8 @@ in 2020 were not possible, and in the spring of 2022, only 2 of the 25
 devices available were deployed. Instead of letting these devices sit on
 the shelf for 2+ years, we have developed a plan to deploy a portion of
 them on northern fur seals at San Miguel Island and northern fur seals
-at St. Paul Island. At least 10 devices will be reserved for future
-deployments on ice seals via collaborative research with Alaska Native
-communities. These tags were originally funded by the US Navy in 2017.
+at St. Paul Island and Bogoslof Island in Alaska. These tags were originally 
+funded by the US Navy in 2017.
 
 These tags employ two key enhancements that have not been previously
 available:
