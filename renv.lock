@@ -1,6 +1,6 @@
 {
   "R": {
-    "Version": "4.3.1",
+    "Version": "4.3.2",
     "Repositories": [
       {
         "Name": "ianjonsen",
@@ -1357,6 +1357,18 @@
       ],
       "Hash": "9c061da0cd34d1bafd98c710ddb7c1b1"
     },
+    "scico": {
+      "Package": "scico",
+      "Version": "1.5.0",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Requirements": [
+        "R",
+        "grDevices",
+        "scales"
+      ],
+      "Hash": "742a3472a1d45462e66f75dc510f24f6"
+    },
     "sf": {
       "Package": "sf",
       "Version": "1.0-14",
@@ -1699,10 +1711,9 @@
       "RemoteType": "github",
       "RemoteHost": "api.github.com",
       "RemoteRepo": "wcUtils",
-      "RemoteUsername": "noaa-afsc",
-      "RemotePkgRef": "noaa-afsc/wcUtils@dev",
+      "RemoteUsername": "jmlondon",
       "RemoteRef": "dev",
-      "RemoteSha": "9dee8c21dc18be4fae797bdbd9247adc1c3cb5c8",
+      "RemoteSha": "3a6ba1893e66bc2f87efb28ee853d3d5e91b5d74",
       "Requirements": [
         "R",
         "XML",
@@ -1721,7 +1732,7 @@
         "tidyr",
         "xml2"
       ],
-      "Hash": "0b2036050d18ca9ea041a8cf144bef0c"
+      "Hash": "eb7e1cffa56325370446303bcb4bf539"
     },
     "withr": {
       "Package": "withr",
