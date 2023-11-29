@@ -1142,6 +1142,18 @@
       ],
       "Hash": "5e3c5dc0b071b21fa128676560dbe94d"
     },
+    "rcartocolor": {
+      "Package": "rcartocolor",
+      "Version": "2.1.1",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Requirements": [
+        "R",
+        "ggplot2",
+        "scales"
+      ],
+      "Hash": "f9cde980189339bebe5bb22af925dd3c"
+    },
     "rdeck": {
       "Package": "rdeck",
       "Version": "0.5.2",
@@ -1357,18 +1369,6 @@
       ],
       "Hash": "9c061da0cd34d1bafd98c710ddb7c1b1"
     },
-    "scico": {
-      "Package": "scico",
-      "Version": "1.5.0",
-      "Source": "Repository",
-      "Repository": "CRAN",
-      "Requirements": [
-        "R",
-        "grDevices",
-        "scales"
-      ],
-      "Hash": "742a3472a1d45462e66f75dc510f24f6"
-    },
     "sf": {
       "Package": "sf",
       "Version": "1.0-14",
@@ -1457,14 +1457,14 @@
       "Source": "GitHub",
       "RemoteType": "github",
       "RemoteHost": "api.github.com",
-      "RemoteRepo": "stylebox",
       "RemoteUsername": "anthonynorth",
-      "RemoteRef": "HEAD",
+      "RemoteRepo": "stylebox",
+      "RemoteRef": "master",
       "RemoteSha": "4ef63d95aaa3321fab1b32d0159cbe0a10a082d4",
       "Requirements": [
         "R"
       ],
-      "Hash": "0d9b0ba115449fddda22ed181d7b5d1f"
+      "Hash": "d0e317e9e0b2cbee594a7211656f47f2"
     },
     "sys": {
       "Package": "sys",
@@ -1510,16 +1510,16 @@
       "Source": "GitHub",
       "RemoteType": "github",
       "RemoteHost": "api.github.com",
-      "RemoteRepo": "tidyassert",
       "RemoteUsername": "qfes",
-      "RemoteRef": "HEAD",
+      "RemoteRepo": "tidyassert",
+      "RemoteRef": "main",
       "RemoteSha": "20a01266d84472497e0f22c65262083c87994694",
       "Requirements": [
         "R",
         "cli",
         "rlang"
       ],
-      "Hash": "bb20304c57ee6175e78353882b2cffc8"
+      "Hash": "63ad1c8752590773d625be290c434e58"
     },
     "tidyr": {
       "Package": "tidyr",
