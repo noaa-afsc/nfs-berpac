@@ -583,7 +583,7 @@ pdt_nest <- pdt_data %>%
 
 ```{r}
 #| layout: [[1,1]]
-#| fig-asp: 1.75
+#| fig-asp: 1.85
 #| fig-width: 5.75
 pdt_data %>% 
   filter(depth<0) %>% 
